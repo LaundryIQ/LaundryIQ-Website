@@ -1,3 +1,15 @@
 [submodule "apps/shop"]
 	path = apps/shop
 	url = https://github.com/LaundryIQ/laundryiq-shop.git
+[submodule ".cursor/skills/frontend-design"]
+	path = .cursor/skills/frontend-design
+	url = https://github.com/LeeorNahum/claude-code-frontend-design-skill.git
+[submodule ".cursor/skills/web-font-loading"]
+	path = .cursor/skills/web-font-loading
+	url = https://github.com/LeeorNahum/web-font-loading-skill.git
+[submodule ".cursor/skills/responsive-design"]
+	path = .cursor/skills/responsive-design
+	url = https://github.com/LeeorNahum/responsive-web-design-skill.git
+[submodule ".cursor/skills/convex-rules"]
+	path = .cursor/skills/convex-rules
+	url = https://github.com/LeeorNahum/convex-cursor-rules-skill.git
