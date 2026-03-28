@@ -1,6 +1,7 @@
 [submodule "apps/shop"]
 	path = apps/shop
-	url = https://github.com/LaundryIQ/laundryiq-shop.git
+	url = https://github.com/LaundryIQ/LaundryIQ-Shop.git
+	branch = dev
 [submodule ".cursor/skills/frontend-design"]
 	path = .cursor/skills/frontend-design
 	url = https://github.com/LeeorNahum/claude-code-frontend-design-skill.git

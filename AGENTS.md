@@ -81,12 +81,6 @@ cd packages/convex && npx convex deploy # Deploy Convex to prod
 
 Do not use legacy AI models like GPT-4o. Use current models from major labs.
 
-## Typography
-
-**System fonts only** for Vite SPA apps (portal, dashboard). No `@import url(...)` in CSS, no external font services. `system-ui, -apple-system, sans-serif`. Avoids FOUT and external network requests.
-
-Next.js `apps/web` may use `next/font` for brand fonts — SSR preloads eliminate FOUT.
-
 ## Verification
 
 For comprehensive edits, always finish with a numbered manual test checklist covering changed behaviors end-to-end.
@@ -107,7 +101,6 @@ For comprehensive edits, always finish with a numbered manual test checklist cov
 
 All web surfaces follow these design constraints:
 - Dark mode only (MVP). Background `#0b1120`, surface `#131c2e`, primary `#0DA6E7 → #06CBD5` gradient
-- System fonts only (`system-ui, -apple-system, sans-serif`) — no Google Fonts, no external font services, avoids FOUT entirely
 - Status indicators always use icon + color + text (colorblind accessible)
 - Machine display states: `off` / `idle` / `running` (firmware) + `complete` / `offline` (UI-derived)
 
