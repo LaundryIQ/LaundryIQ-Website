@@ -1,0 +1,11 @@
+node_modules/
+.turbo/
+dist/
+.next/
+.expo/
+*.env.local
+.env
+.env.local
+
+# Convex generated
+packages/convex/convex/_generated/

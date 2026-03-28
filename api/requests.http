@@ -1,0 +1,59 @@
+# LaundryIQ Device API — REST Client Examples
+# Use VS Code REST Client extension (humao.rest-client) to execute these.
+#
+# Copy .env.example to .env and fill in your values (gitignored).
+# The .env file sits in this same directory.
+
+@baseUrl = {{$dotenv API_BASE}}
+@apiKey = {{$dotenv API_KEY}}
+@deviceId = {{$dotenv DEVICE_ID}}
+@currentVersion = {{$dotenv CURRENT_VERSION}}
+@hardwareVersion = {{$dotenv HARDWARE_VERSION}}
+
+###
+# POST /device/claim — First-time provisioning (no API key yet)
+# Admin must create a pending claim in the dashboard first.
+# Device sends type ("washer" | "dryer") in body.
+# 200: {"apiKey": "liq_..."} — store in NVS
+# 404: {"status": "unclaimed"} — poll every 60s
+#
+POST {{baseUrl}}/api/v1/device/claim
+X-Device-ID: {{deviceId}}
+Content-Type: application/json
+
+{
+  "type": "washer"
+}
+
+###
+# POST /device/heartbeat — Liveness ping (every 300s / 5 min)
+# Empty body. 401 = clear key, enter claim mode.
+#
+POST {{baseUrl}}/api/v1/device/heartbeat
+Authorization: Bearer {{apiKey}}
+X-Device-ID: {{deviceId}}
+Content-Type: application/json
+
+{}
+
+###
+# POST /device/state — Report machine state change (on change only)
+# "off" | "idle" | "running"
+#
+POST {{baseUrl}}/api/v1/device/state
+Authorization: Bearer {{apiKey}}
+X-Device-ID: {{deviceId}}
+Content-Type: application/json
+
+{
+  "state": "running"
+}
+
+###
+# GET /device/ota/check — Firmware update check (every 6 hours)
+#
+GET {{baseUrl}}/api/v1/device/ota/check
+Authorization: Bearer {{apiKey}}
+X-Device-ID: {{deviceId}}
+X-Current-Version: {{currentVersion}}
+X-Hardware-Version: {{hardwareVersion}}

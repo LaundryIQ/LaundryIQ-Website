@@ -1,0 +1,13 @@
+{
+  "name": "@laundryiq/convex",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "convex": "^1.33.0"
+  }
+}

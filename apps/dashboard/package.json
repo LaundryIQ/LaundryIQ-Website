@@ -1,0 +1,27 @@
+{
+  "name": "@laundryiq/dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.3",
+    "convex": "^1.33.0",
+    "@clerk/clerk-react": "^5.0.0",
+    "@laundryiq/ui": "workspace:*",
+    "@laundryiq/utils": "workspace:*",
+    "@laundryiq/convex": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  }
+}
