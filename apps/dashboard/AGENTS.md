@@ -37,4 +37,4 @@ Based on `LaundryIQ-UI-Mockup/04-dashboard/` design specs:
 ## Data Source
 
 All data from Convex via `@laundryiq/convex`.
-Place = BetterAuth Organization. Members have "admin" or "viewer" roles.
+Place membership is enforced via Clerk-authenticated app access and Convex-side role checks.
