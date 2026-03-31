@@ -1,0 +1,108 @@
+/**
+ * LaundryIQ Marketing Site — Global Styles
+ * Mirrors the CSS variables and resets from LaundryIQ-UI-Mockup/00-foundations.
+ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-page: #0b1120;
+  --bg-surface-1: #131c2e;
+  --bg-surface-2: #1a2540;
+  --bg-surface-3: #222f4a;
+  --bg-elevated: #2a3755;
+  --border-subtle: #1e2d47;
+  --border-default: #2a3d5c;
+  --border-strong: #3d5278;
+  --primary-50: #e8f7fd;
+  --primary-100: #bae8f9;
+  --primary-200: #7dd4f3;
+  --primary-300: #3dbfec;
+  --primary-400: #0DA6E7;
+  --primary-500: #0b91cc;
+  --primary-600: #0978aa;
+  --primary-gradient: linear-gradient(135deg, #0B95D0 0%, #05B0BA 100%);
+  --primary-gradient-hover: linear-gradient(135deg, #0A85BA 0%, #049DA6 100%);
+  --text-primary: #f0f4f8;
+  --text-on-surface: #c5d1de;
+  --text-secondary: #94a3b8;
+  --text-muted: #5f7089;
+  --text-on-primary: #ffffff;
+  --success: #34d399;
+  --success-soft: rgba(52,211,153,0.12);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251,191,36,0.12);
+  --error: #f87171;
+  --error-soft: rgba(248,113,113,0.12);
+  --info: #0DA6E7;
+  --info-soft: rgba(13,166,231,0.12);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  --font-heading: var(--font-plus-jakarta), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.2);
+  --shadow-glow: 0 0 20px rgba(13,166,231,0.25), 0 0 60px rgba(6,203,213,0.1);
+  --transition-fast: 150ms cubic-bezier(0.4,0,0.2,1);
+  --transition-base: 250ms cubic-bezier(0.4,0,0.2,1);
+}
+
+/* CRITICAL: overflow-x hidden must be on BOTH html AND body for mobile browsers */
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+a {
+  color: var(--primary-400);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-300);
+}
+
+/* Status animations */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes wave-move {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(25%); }
+}
+
+@keyframes drum-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes ripple {
+  0% { opacity: 0.6; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(1.2); }
+}
+
+@keyframes fade-up-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}

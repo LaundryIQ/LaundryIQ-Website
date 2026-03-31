@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>LaundryIQ Setup</title>
+    <style>
+      :root {
+        --bg: #0b1120;
+        --surface: #131c2e;
+        --surface-2: #1a2540;
+        --border: #2a3d5c;
+        --text: #f0f4f8;
+        --text-muted: #94a3b8;
+        --primary: #0da6e7;
+        --primary-2: #06cbd5;
+        --success: #34d399;
+        --error: #f87171;
+        --radius: 20px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(13, 166, 231, 0.14), transparent 32%),
+          radial-gradient(circle at bottom right, rgba(6, 203, 213, 0.08), transparent 26%),
+          var(--bg);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .shell {
+        width: min(100%, 440px);
+        background: rgba(19, 28, 46, 0.96);
+        border: 2px solid rgba(42, 61, 92, 0.9);
+        border-radius: 28px;
+        padding: 24px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+
+      .logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(13, 166, 231, 0.22), rgba(6, 203, 213, 0.18));
+        border: 2px solid rgba(13, 166, 231, 0.28);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        line-height: 1.1;
+      }
+
+      .eyebrow,
+      .hint,
+      .status-copy {
+        color: var(--text-muted);
+      }
+
+      .eyebrow {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 4px;
+        display: block;
+      }
+
+      .panel {
+        background: var(--surface-2);
+        border: 2px solid rgba(42, 61, 92, 0.85);
+        border-radius: var(--radius);
+        padding: 18px;
+      }
+
+      .panel + .panel {
+        margin-top: 14px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+
+      .field {
+        margin-bottom: 14px;
+      }
+
+      select,
+      input,
+      button {
+        width: 100%;
+        min-height: 48px;
+        border-radius: 16px;
+        border: 2px solid var(--border);
+        background: #0f1728;
+        color: var(--text);
+        font: inherit;
+      }
+
+      select,
+      input {
+        padding: 0 14px;
+      }
+
+      .password-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+      }
+
+      .password-row button {
+        width: auto;
+        padding: 0 14px;
+        background: transparent;
+        color: var(--text-muted);
+      }
+
+      .connect-btn {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+        color: #fff;
+        font-weight: 700;
+        border: none;
+        box-shadow: 0 12px 30px rgba(13, 166, 231, 0.22);
+      }
+
+      .status {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        margin-top: 4px;
+        flex-shrink: 0;
+        background: var(--primary);
+        box-shadow: 0 0 14px rgba(13, 166, 231, 0.8);
+      }
+
+      .status.success .status-dot {
+        background: var(--success);
+        box-shadow: 0 0 14px rgba(52, 211, 153, 0.8);
+      }
+
+      .status.error .status-dot {
+        background: var(--error);
+        box-shadow: 0 0 14px rgba(248, 113, 113, 0.8);
+      }
+
+      .status-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .hint {
+        font-size: 0.8rem;
+        line-height: 1.5;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .ghost-btn {
+        background: transparent;
+      }
+
+      @media (max-width: 420px) {
+        .shell {
+          padding: 18px;
+          border-radius: 24px;
+        }
+
+        .password-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="brand">
+        <div class="logo">
+          <img alt="LaundryIQ" src="/logo.svg" />
+        </div>
+        <div>
+          <span class="eyebrow">LaundryIQ Setup</span>
+          <h1>Connect to your WiFi</h1>
+        </div>
+      </div>
+
+      <section class="panel">
+        <div class="field">
+          <label for="network">WiFi network</label>
+          <select id="network">
+            <option value="">Scanning nearby networks…</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="password-row">
+            <input id="password" placeholder="Enter WiFi password" type="password" />
+            <button id="toggle-password" type="button">Show</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="ghost-btn" id="refresh-networks" type="button">Refresh Networks</button>
+          <button class="connect-btn" id="connect-button" type="button">Connect</button>
+        </div>
+
+        <p class="hint" style="margin-top: 12px;">
+          Select a 2.4GHz network if your router separates 2.4GHz and 5GHz bands.
+        </p>
+      </section>
+
+      <section class="panel" id="status-panel">
+        <div class="status" id="status-box">
+          <span class="status-dot"></span>
+          <div>
+            <div class="status-title">Waiting for WiFi details</div>
+            <div class="status-copy">Choose a network, enter the password, and press Connect.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const networkSelect = document.getElementById("network");
+      const passwordInput = document.getElementById("password");
+      const togglePasswordButton = document.getElementById("toggle-password");
+      const refreshNetworksButton = document.getElementById("refresh-networks");
+      const connectButton = document.getElementById("connect-button");
+      const statusBox = document.getElementById("status-box");
+
+      function setStatus(kind, title, copy) {
+        statusBox.className = `status ${kind}`;
+        statusBox.innerHTML = `
+          <span class="status-dot"></span>
+          <div>
+            <div class="status-title">${title}</div>
+            <div class="status-copy">${copy}</div>
+          </div>
+        `;
+      }
+
+      async function loadNetworks() {
+        setStatus("loading", "Scanning WiFi", "Looking for nearby networks from the LaundryIQ device.");
+
+        try {
+          const response = await fetch("/scan", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error("scan_failed");
+          }
+
+          const payload = await response.json();
+          const networks = Array.isArray(payload.networks) ? payload.networks : [];
+
+          networkSelect.innerHTML = networks.length
+            ? `<option value="">Choose a network</option>${networks.map((network) => `<option value="${network.ssid}">${network.ssid}</option>`).join("")}`
+            : `<option value="">No networks found</option>`;
+
+          setStatus("loading", "Networks ready", "Select your WiFi network and continue setup.");
+        } catch (error) {
+          networkSelect.innerHTML = `
+            <option value="">Home WiFi</option>
+            <option value="Campus-Residence">Campus-Residence</option>
+            <option value="Laundry Room 2.4G">Laundry Room 2.4G</option>
+          `;
+          setStatus("error", "Using fallback list", "The device could not refresh networks right now. You can still enter your WiFi manually.");
+        }
+      }
+
+      async function connect() {
+        const ssid = networkSelect.value.trim();
+        const password = passwordInput.value;
+
+        if (!ssid) {
+          setStatus("error", "Choose a network", "Select a WiFi network before connecting.");
+          return;
+        }
+
+        setStatus("loading", "Connecting…", "LaundryIQ is joining your WiFi. This can take up to 30 seconds.");
+        connectButton.disabled = true;
+
+        try {
+          const response = await fetch("/connect", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ssid, password }),
+          });
+
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload.error || "connection_failed");
+          }
+
+          setStatus("success", "Connected!", "LaundryIQ is online. You can close this page and return to the dashboard.");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "connection_failed";
+          if (message.includes("password")) {
+            setStatus("error", "Wrong password", "Double-check the WiFi password and try again.");
+          } else if (message.includes("not_found")) {
+            setStatus("error", "Network not found", "Refresh the network list and choose the correct WiFi.");
+          } else {
+            setStatus("error", "Connection failed", "LaundryIQ could not join that WiFi network. Try again in a moment.");
+          }
+        } finally {
+          connectButton.disabled = false;
+        }
+      }
+
+      togglePasswordButton.addEventListener("click", () => {
+        const showingPassword = passwordInput.type === "text";
+        passwordInput.type = showingPassword ? "password" : "text";
+        togglePasswordButton.textContent = showingPassword ? "Show" : "Hide";
+      });
+
+      refreshNetworksButton.addEventListener("click", loadNetworks);
+      connectButton.addEventListener("click", connect);
+
+      loadNetworks();
+    </script>
+  </body>
+</html>

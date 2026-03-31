@@ -21,5 +21,5 @@ Based on `LaundryIQ-UI-Mockup/01-marketing/` design specs:
 - No auth — fully public
 - Server-rendered for SEO
 - "Buy Now" buttons link to `shop.laundryiq.app` (Shopify)
-- "Get Started" / "Sign In" link to `portal.laundryiq.app/login`
+- "Get Started" / "Sign In" link to `portal.laundryiq.app/signin`
 - Navigation: hamburger on mobile, horizontal on desktop

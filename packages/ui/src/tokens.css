@@ -1,0 +1,176 @@
+/**
+ * LaundryIQ Design Tokens
+ * Source of truth: LaundryIQ-UI-Mockup/00-foundations/foundations.html
+ *
+ * All web surfaces must import this file or replicate these variables.
+ * Dark mode only for MVP.
+ */
+
+:root {
+  /* === BACKGROUNDS === */
+  --bg-page: #0b1120;
+  --bg-surface-1: #131c2e;
+  --bg-surface-2: #1a2540;
+  --bg-surface-3: #222f4a;
+  --bg-elevated: #2a3755;
+  --bg-overlay: rgba(5, 9, 18, 0.8);
+
+  /* === BORDERS === */
+  --border-subtle: #1e2d47;
+  --border-default: #2a3d5c;
+  --border-strong: #3d5278;
+
+  /* === PRIMARY — Logo-derived blue-teal === */
+  --primary-50: #e8f7fd;
+  --primary-100: #bae8f9;
+  --primary-200: #7dd4f3;
+  --primary-300: #3dbfec;
+  --primary-400: #0DA6E7;
+  --primary-500: #0b91cc;
+  --primary-600: #0978aa;
+  --primary-700: #075f87;
+  --primary-800: #054664;
+  --primary-900: #032d42;
+  --primary-gradient: linear-gradient(135deg, #0DA6E7 0%, #06CBD5 100%);
+  --primary-gradient-hover: linear-gradient(135deg, #0b91cc 0%, #05b3bd 100%);
+
+  /* === TEXT === */
+  --text-primary: #f0f4f8;
+  --text-on-surface: #c5d1de;
+  --text-secondary: #94a3b8;
+  --text-muted: #5f7089;
+  --text-on-primary: #ffffff;
+
+  /* === SEMANTIC STATUS === */
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.12);
+  --success-border: rgba(52, 211, 153, 0.3);
+
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+  --warning-border: rgba(251, 191, 36, 0.3);
+
+  --error: #f87171;
+  --error-soft: rgba(248, 113, 113, 0.12);
+  --error-border: rgba(248, 113, 113, 0.3);
+
+  --info: #0DA6E7;
+  --info-soft: rgba(13, 166, 231, 0.12);
+  --info-border: rgba(13, 166, 231, 0.3);
+
+  /* === SPACING (4px base) === */
+  --space-xs: 0.25rem;   /* 4px */
+  --space-sm: 0.5rem;    /* 8px */
+  --space-md: 0.75rem;   /* 12px */
+  --space-lg: 1rem;      /* 16px */
+  --space-xl: 1.5rem;    /* 24px */
+  --space-2xl: 2rem;     /* 32px */
+  --space-3xl: 3rem;     /* 48px */
+  --space-4xl: 4rem;     /* 64px */
+
+  /* === RADIUS === */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* === TYPOGRAPHY === */
+  --font-heading: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
+
+  /* === SHADOWS === */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-glow-primary: 0 0 20px rgba(13, 166, 231, 0.25), 0 0 60px rgba(6, 203, 213, 0.1);
+  --shadow-glow-success: 0 0 16px rgba(52, 211, 153, 0.3);
+  --shadow-glow-warning: 0 0 16px rgba(251, 191, 36, 0.3);
+  --shadow-glow-error: 0 0 16px rgba(248, 113, 113, 0.3);
+
+  /* === TRANSITIONS === */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === GLOBAL RESETS === */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* CRITICAL: overflow-x hidden must be on html AND body for mobile browsers */
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  color: var(--primary-400);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-300);
+}
+
+/* === SKELETON ANIMATION === */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface-2) 25%,
+    var(--bg-surface-3) 50%,
+    var(--bg-surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+/* === STATUS DOT PULSE === */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.3); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* === RIPPLE FOR RUNNING MACHINES === */
+@keyframes ripple {
+  0% { opacity: 0.6; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(1.2); }
+}
+
+/* === SPINNER === */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === FADE IN === */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

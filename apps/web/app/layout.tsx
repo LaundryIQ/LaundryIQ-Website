@@ -1,25 +1,32 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 
+import "./globals.css";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  weight: ["500", "600", "700", "800"],
+});
+
 export const metadata: Metadata = {
-  title: "LaundryIQ",
-  description: "Smart laundry monitoring for shared spaces.",
+  title: {
+    default: "LaundryIQ — Know When Your Laundry's Done",
+    template: "%s | LaundryIQ",
+  },
+  description:
+    "Smart monitoring for washers and dryers. Get notified when your laundry is done. Works for homes, laundromats, and universities.",
+  openGraph: {
+    siteName: "LaundryIQ",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body
-        style={{
-          margin: 0,
-          fontFamily:
-            "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          background: "#020617",
-          color: "#e2e8f0",
-        }}
-      >
-        {children}
-      </body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={plusJakartaSans.variable} suppressHydrationWarning>{children}</body>
     </html>
   );
 }

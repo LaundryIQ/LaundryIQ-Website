@@ -14,7 +14,7 @@ Based on `LaundryIQ-UI-Mockup/04-dashboard/` design specs:
 
 | Route | Purpose |
 |---|---|
-| `/login` | Sign in / sign up |
+| `/signin` | Sign in / sign up |
 | `/places` | All places (organizations) |
 | `/places/:placeId` | Place overview |
 | `/places/:placeId/machines` | Machine grid (list + grid toggle) |

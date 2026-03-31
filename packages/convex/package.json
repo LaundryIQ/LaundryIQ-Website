@@ -3,11 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "convex dev",
+    "dev": "convex dev --typecheck=disable",
     "deploy": "convex deploy",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "convex": "^1.33.0"
+    "@convex-dev/rate-limiter": "^0.3.2",
+    "convex": "^1.33.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@types/web-push": "^3.6.4"
   }
 }
