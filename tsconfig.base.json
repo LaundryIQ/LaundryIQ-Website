@@ -13,6 +13,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@laundryiq/convex/*": ["packages/convex/*"],
       "@laundryiq/ui": ["packages/ui/src/index.ts"],
       "@laundryiq/utils": ["packages/utils/src/index.ts"]
     }
