@@ -7,5 +7,5 @@ dist/
 .env
 .env.local
 
-# Convex generated
-packages/convex/convex/_generated/
+# Convex generated client/server bindings are consumed by other workspace apps,
+# so they must be committed for remote builds like Vercel previews.
