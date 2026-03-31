@@ -21,7 +21,7 @@ Based on `LaundryIQ-UI-Mockup/03-portal/` design specs:
 
 | Route | Purpose |
 |---|---|
-| `/login` | Sign in / sign up |
+| `/signin` | Sign in / sign up |
 | `/p` | My Places list |
 | `/p/:placeId` | Machine grid for a place |
 | `/p/:placeId/m/:machineId` | Machine detail modal |

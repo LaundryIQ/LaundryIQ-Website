@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "convex dev",
+    "dev": "convex dev --typecheck=disable",
     "deploy": "convex deploy",
     "typecheck": "tsc --noEmit"
   },
