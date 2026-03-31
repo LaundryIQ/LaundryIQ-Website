@@ -122,6 +122,18 @@ export default defineSchema({
     .index("by_place", ["placeId"])
     .index("by_expires_at", ["expiresAt"]),
 
+  // ─── Cycles ───────────────────────────────────────────────────────────────────
+  // Historical summaries of completed runs for analytics and reporting.
+  cycles: defineTable({
+    machineId: v.id("machines"),
+    placeId: v.id("places"),
+    startedAt: v.number(),
+    endedAt: v.number(),
+    durationMs: v.number(),
+  })
+    .index("by_machine", ["machineId"])
+    .index("by_place_and_started", ["placeId", "startedAt"]),
+
   // ─── Firmware ─────────────────────────────────────────────────────────────────
   // Records published firmware versions. Updated manually or via CI on release.
   firmware: defineTable({
@@ -146,5 +158,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_machine", ["machineId"]),
+    .index("by_machine", ["machineId"])
+    .index("by_user_and_machine", ["userId", "machineId"])
+    .index("by_endpoint", ["endpoint"]),
 });

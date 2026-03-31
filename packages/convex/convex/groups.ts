@@ -46,11 +46,8 @@ async function requireMembership(
 export const listForPlace = query({
   args: { placeId: v.id("places") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-    if (!user) return [];
-
-    const membership = await getMembership(ctx, user._id, args.placeId);
-    if (!membership) return [];
+    const place = await ctx.db.get(args.placeId);
+    if (!place) return [];
 
     return await ctx.db
       .query("groups")

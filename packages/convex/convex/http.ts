@@ -13,6 +13,7 @@
 import { httpRouter } from "convex/server";
 import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
+import { rateLimiter } from "./rateLimiter";
 
 const http = httpRouter();
 
@@ -55,6 +56,20 @@ function getBearerToken(request: Request) {
   }
 
   return apiKey;
+}
+
+function getClientIp(request: Request) {
+  const cfIp = request.headers.get("CF-Connecting-IP");
+  if (cfIp) {
+    return cfIp;
+  }
+
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0]?.trim() ?? "unknown";
+  }
+
+  return "unknown";
 }
 
 async function parseJsonBody<T>(request: Request): Promise<T | null> {
@@ -144,6 +159,16 @@ http.route({
       return error(400, "Invalid X-Device-ID header.");
     }
 
+    const claimRateLimit = await rateLimiter.limit(ctx, "deviceClaim", {
+      key: getClientIp(request),
+    });
+    if (!claimRateLimit.ok) {
+      return json(429, {
+        error: "Too many claim attempts. Try again later.",
+        retryAfter: claimRateLimit.retryAfter,
+      });
+    }
+
     const body = await parseJsonBody<{ type?: string }>(request);
     if (!body || (body.type !== "washer" && body.type !== "dryer")) {
       return error(400, 'Body must include type: "washer" | "dryer".');
@@ -181,6 +206,16 @@ http.route({
       return auth.response;
     }
 
+    const heartbeatRateLimit = await rateLimiter.limit(ctx, "deviceHeartbeat", {
+      key: auth.deviceId,
+    });
+    if (!heartbeatRateLimit.ok) {
+      return json(429, {
+        error: "Heartbeat rate limit exceeded.",
+        retryAfter: heartbeatRateLimit.retryAfter,
+      });
+    }
+
     const body = await parseJsonBody<Record<string, never>>(request);
     if (body === null) {
       return error(400, "Heartbeat body must be valid JSON.");
@@ -191,7 +226,7 @@ http.route({
       now: Date.now(),
     });
 
-    return json(200, { status: "ok" });
+    return json(200, { success: true });
   }),
 });
 
@@ -202,6 +237,16 @@ http.route({
     const auth = await authenticateRequest(ctx, request);
     if (!auth.ok) {
       return auth.response;
+    }
+
+    const stateRateLimit = await rateLimiter.limit(ctx, "deviceState", {
+      key: auth.deviceId,
+    });
+    if (!stateRateLimit.ok) {
+      return json(429, {
+        error: "State update rate limit exceeded.",
+        retryAfter: stateRateLimit.retryAfter,
+      });
     }
 
     const body = await parseJsonBody<{ state?: string }>(request);

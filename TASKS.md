@@ -348,21 +348,17 @@ Import `PORTAL_URL` from `../lib/urls`.
 
 ---
 
-### T5-2 · Add Pricing page at `/pricing`
+### T5-2 · Do not add `/pricing` — pricing now lives in `/products`
 
-**File**: Create `apps/web/app/pricing/page.tsx`  
-**Spec**: UI mockup `01-marketing/home/README.md` describes a Pricing page. Every marketing site in the plan lists `/pricing` as a route.
+**Status note**: This task supersedes the older pricing-page plan. The newer marketing spec moved pricing into the Products flow, so there should be **no standalone `/pricing` route**.
 
-**Content**:
-- Header: "Simple, transparent pricing"
-- Hardware price card: "LaundryIQ Smart Plug — $XX" with "Buy Now" → `SHOP_URL`
-- What's included: Real-time status, push notifications, unlimited machines per place, mobile-friendly portal, admin dashboard
-- Bulk/B2B pricing: "Managing 10+ machines? [Contact us]"
-- FAQ accordion: "Is there a monthly subscription?", "Works with any washer/dryer brand?", "What happens if the device loses WiFi?", etc.
+**What to verify / keep aligned**:
+- `apps/web/components/MarketingNav.tsx` keeps `Features`, `Products`, `About`, `Shop` (no `Pricing` link)
+- `apps/web/app/products/page.tsx` includes price visibility and bulk/B2B messaging
+- `apps/web/app/products/smart-plug/page.tsx` carries the current Smart Plug pricing and Shopify buy CTA
+- Footer internal links stay on existing routes only (`/features`, `/products`, `/about`, `/privacy`, `/terms`)
 
-Read the `frontend-design` and `responsive-design` SKILLs before implementing. Match the visual style of the existing pages (same nav, footer, CSS vars from `globals.css`).
-
-Also add "Pricing" link to `MarketingNav` in `apps/web/components/MarketingNav.tsx` (between "About" and "Shop").
+If pricing content needs expansion, add it to the Products listing or Smart Plug detail page rather than creating a new top-level route.
 
 ---
 
@@ -576,7 +572,7 @@ Lower urgency but required before a full production launch or competition demo.
 **Check**:
 - Admin link → `${DASHBOARD_URL}/signin` (should be the footer's only dashboard reference per AGENTS.md)
 - Portal link → `${PORTAL_URL}/signin`
-- All internal page links (`/features`, `/products`, `/about`, `/pricing`, `/privacy`, `/terms`) are correct
+- All internal page links (`/features`, `/products`, `/about`, `/privacy`, `/terms`) are correct
 - Shop link → `SHOP_URL` (external)
 - No hardcoded production domains in code — all via env vars
 
@@ -618,7 +614,7 @@ Lower urgency but required before a full production launch or competition demo.
 | T4-5 | `apps/dashboard/src/App.tsx` |
 | T4-6 | `apps/dashboard/src/App.tsx` |
 | T5-1 | `apps/web/app/page.tsx` |
-| T5-2 | `apps/web/app/pricing/page.tsx` (new), `apps/web/components/MarketingNav.tsx` |
+| T5-2 | `apps/web/app/products/page.tsx`, `apps/web/app/products/smart-plug/page.tsx`, `apps/web/components/MarketingNav.tsx` |
 | T5-3 | `packages/ui/src/tokens.css`, `apps/web/app/globals.css`, `apps/web/app/layout.tsx`, `apps/portal/index.html`, `apps/dashboard/index.html` |
 | T6-1 | `packages/convex/convex/firmware.ts` (new) |
 | T6-2 | `packages/convex/convex/machines.ts`, `packages/convex/convex/places.ts` |

@@ -47,6 +47,7 @@ import {
 import {
   deriveDisplayState,
   displayStateLabel,
+  formatDuration,
   formatRelativeTime,
   formatTimestamp,
   machineStatusCopy,
@@ -275,8 +276,6 @@ function StatusBadge({ displayState }: { displayState: DisplayState }) {
 // ─── Dashboard header ─────────────────────────────────────────────────────────
 
 function DashHeader({ backTo, title }: { backTo?: string; title?: string }) {
-  const { user } = useUser();
-
   return (
     <header style={css.header}>
       <div style={css.headerInner}>
@@ -303,6 +302,28 @@ function DashHeader({ backTo, title }: { backTo?: string; title?: string }) {
         <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.0625rem", fontWeight: 600, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {title ?? (backTo ? "" : "Dashboard")}
         </span>
+        <Link
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 44,
+            height: 44,
+            minWidth: 44,
+            borderRadius: "var(--radius-full)",
+            border: "2px solid var(--border-default)",
+            background: "var(--bg-surface-2)",
+            color: "var(--text-secondary)",
+            textDecoration: "none",
+            flexShrink: 0,
+          }}
+          to="/settings"
+        >
+          <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24" width="18">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 005 15.4a1.65 1.65 0 00-1.51-1H3.4a2 2 0 010-4h.09A1.65 1.65 0 005 8.89a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009.11 5c.64-.27 1-.9 1-1.59V3.4a2 2 0 014 0v.09c0 .69.36 1.32 1 1.59a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019 8.89c.27.64.9 1 1.59 1h.09a2 2 0 010 4h-.09c-.69 0-1.32.36-1.59 1z" />
+          </svg>
+        </Link>
         <UserButton afterSignOutUrl="/signin" />
       </div>
     </header>
@@ -576,13 +597,21 @@ function PlaceListPage() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem" }}>
                   <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: "1.0625rem" }}>{place.name}</h3>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0.25rem 0.625rem", borderRadius: "var(--radius-full)", background: "var(--success-soft)", border: "1px solid var(--success-border)", color: "var(--success)" }}>
-                    {place.role}
+                    {"role" in place ? place.role : "viewer"}
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
                   <div>
                     <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{place.machineCount}</div>
                     <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>Machines</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{place.runningCount ?? 0}</div>
+                    <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>Running</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{place.cyclesToday ?? 0}</div>
+                    <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>Cycles Today</div>
                   </div>
                 </div>
               </Link>
@@ -623,10 +652,13 @@ function PlaceOverviewPage() {
   const { placeId } = useParams<{ placeId: string }>();
   const place = useQuery(api.places.getById, placeId ? { placeId: placeId as Id<"places"> } : "skip");
   const machines = useQuery(api.machines.listForPlace, placeId ? { placeId: placeId as Id<"places"> } : "skip");
+  const cyclesToday = useQuery(
+    api.cycles.countTodayForPlace,
+    placeId ? { placeId: placeId as Id<"places"> } : "skip",
+  );
 
   if (place === null) return <DashNotFoundPage />;
 
-  const now = Date.now();
   const running = machines?.filter((m) => deriveDisplayState(m.state, m.lastStateChangeAt, m.lastHeartbeatAt, m.previousState) === "running").length ?? 0;
   const offlineMachines = machines?.filter((m) => deriveDisplayState(m.state, m.lastStateChangeAt, m.lastHeartbeatAt, m.previousState) === "offline").length ?? 0;
 
@@ -641,7 +673,7 @@ function PlaceOverviewPage() {
           {[
             { label: "Machines", value: machines?.length ?? "—", icon: null },
             { label: "Running", value: running, highlight: running > 0 ? "warning" : null },
-            { label: "Cycles Today", value: "—", icon: null },
+            { label: "Cycles Today", value: cyclesToday ?? "—", icon: null },
             { label: "Offline", value: offlineMachines, highlight: offlineMachines > 0 ? "error" : null },
           ].map((stat) => (
             <div
@@ -736,18 +768,19 @@ function MachinesPage() {
   const { placeId } = useParams<{ placeId: string }>();
   const place = useQuery(api.places.getById, placeId ? { placeId: placeId as Id<"places"> } : "skip");
   const machines = useQuery(api.machines.listForPlace, placeId ? { placeId: placeId as Id<"places"> } : "skip");
+  const groups = useQuery(api.groups.listForPlace, placeId ? { placeId: placeId as Id<"places"> } : "skip");
   const createMachine = useMutation(api.machines.create);
 
   const [showCreate, setShowCreate] = useState(false);
   const [newMachineName, setNewMachineName] = useState("");
   const [newMachineType, setNewMachineType] = useState<"washer" | "dryer">("washer");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [filterGroup, setFilterGroup] = useState("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "idle" | "running" | "complete" | "offline">("all");
+  const [filterType, setFilterType] = useState<"all" | "washer" | "dryer">("all");
   const [creating, setCreating] = useState(false);
 
   if (place === null) return <DashNotFoundPage />;
-
-  const groups = machines
-    ? [...new Set(machines.map((m) => m.groupName).filter((g): g is string => g !== null))]
-    : [];
 
   async function handleCreateMachine() {
     if (!placeId || !newMachineName.trim()) return;
@@ -761,6 +794,27 @@ function MachinesPage() {
     }
   }
 
+  const filteredMachines = machines?.filter((machine) => {
+    const displayState = deriveDisplayState(
+      machine.state,
+      machine.lastStateChangeAt,
+      machine.lastHeartbeatAt,
+      machine.previousState,
+    );
+
+    if (filterGroup !== "all" && machine.groupName !== filterGroup) {
+      return false;
+    }
+    if (filterStatus !== "all" && displayState !== filterStatus) {
+      return false;
+    }
+    if (filterType !== "all" && machine.type !== filterType) {
+      return false;
+    }
+
+    return true;
+  });
+
   return (
     <div style={{ ...css.page, paddingBottom: 60 }}>
       <DashHeader backTo="/p" title={place?.name ?? "..."} />
@@ -768,10 +822,75 @@ function MachinesPage() {
       <div style={css.content}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
           <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 700 }}>Machines</h2>
-          <button onClick={() => setShowCreate(true)} style={css.btnPrimary} type="button">
-            <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><path d="M12 5v14M5 12h14" /></svg>
-            Add Machine
-          </button>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            <div style={{ display: "inline-flex", background: "var(--bg-surface-2)", border: "2px solid var(--border-subtle)", borderRadius: "var(--radius-full)", padding: "0.25rem", gap: "0.25rem" }}>
+              <button
+                onClick={() => setViewMode("grid")}
+                style={{ ...css.btnSecondary, minHeight: 36, padding: "0.5rem 0.875rem", background: viewMode === "grid" ? "var(--bg-surface-1)" : "transparent", border: viewMode === "grid" ? "2px solid var(--border-default)" : "2px solid transparent" }}
+                type="button"
+              >
+                Grid
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                style={{ ...css.btnSecondary, minHeight: 36, padding: "0.5rem 0.875rem", background: viewMode === "table" ? "var(--bg-surface-1)" : "transparent", border: viewMode === "table" ? "2px solid var(--border-default)" : "2px solid transparent" }}
+                type="button"
+              >
+                Table
+              </button>
+            </div>
+            <button onClick={() => setShowCreate(true)} style={css.btnPrimary} type="button">
+              <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><path d="M12 5v14M5 12h14" /></svg>
+              Add Machine
+            </button>
+          </div>
+        </div>
+
+        <div style={{ ...css.card, marginBottom: "1.25rem", padding: "1rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.75rem" }}>
+            <div>
+              <label style={css.formLabel} htmlFor="machine-filter-group">Group</label>
+              <select
+                id="machine-filter-group"
+                onChange={(e) => setFilterGroup(e.target.value)}
+                style={css.formSelect}
+                value={filterGroup}
+              >
+                <option value="all">All Groups</option>
+                {groups?.map((group) => (
+                  <option key={group._id} value={group.name}>{group.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={css.formLabel} htmlFor="machine-filter-status">Status</label>
+              <select
+                id="machine-filter-status"
+                onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+                style={css.formSelect}
+                value={filterStatus}
+              >
+                <option value="all">All Statuses</option>
+                <option value="idle">Available</option>
+                <option value="running">Running</option>
+                <option value="complete">Done</option>
+                <option value="offline">Offline</option>
+              </select>
+            </div>
+            <div>
+              <label style={css.formLabel} htmlFor="machine-filter-type">Type</label>
+              <select
+                id="machine-filter-type"
+                onChange={(e) => setFilterType(e.target.value as typeof filterType)}
+                style={css.formSelect}
+                value={filterType}
+              >
+                <option value="all">All Types</option>
+                <option value="washer">Washer</option>
+                <option value="dryer">Dryer</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Machine grid */}
@@ -790,9 +909,18 @@ function MachinesPage() {
             <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", marginBottom: "1.5rem" }}>Add a machine entry, then claim a device for it.</p>
             <button onClick={() => setShowCreate(true)} style={css.btnPrimary} type="button">Add Machine</button>
           </div>
-        ) : (
+        ) : filteredMachines && filteredMachines.length === 0 ? (
+          <div style={{ ...css.card, textAlign: "center" }}>
+            <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "1.125rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+              No matching machines
+            </h3>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+              Adjust the filters to see more machines.
+            </p>
+          </div>
+        ) : viewMode === "grid" ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
-            {machines.map((machine) => {
+            {filteredMachines?.map((machine) => {
               const displayState = deriveDisplayState(machine.state, machine.lastStateChangeAt, machine.lastHeartbeatAt, machine.previousState);
               return (
                 <div key={machine._id} style={css.card}>
@@ -816,6 +944,57 @@ function MachinesPage() {
                 </div>
               );
             })}
+          </div>
+        ) : (
+          <div style={{ ...css.card, padding: 0, overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
+              <thead>
+                <tr>
+                  {["Name", "Type", "Group", "Status", "Device", "Actions"].map((heading) => (
+                    <th
+                      key={heading}
+                      style={{
+                        textAlign: "left",
+                        padding: "1rem",
+                        fontSize: "0.8125rem",
+                        color: "var(--text-secondary)",
+                        borderBottom: "1px solid var(--border-subtle)",
+                      }}
+                    >
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMachines?.map((machine) => {
+                  const displayState = deriveDisplayState(
+                    machine.state,
+                    machine.lastStateChangeAt,
+                    machine.lastHeartbeatAt,
+                    machine.previousState,
+                  );
+                  return (
+                    <tr key={machine._id}>
+                      <td style={{ padding: "1rem", borderBottom: "1px solid var(--border-subtle)", fontWeight: 600 }}>{machine.name}</td>
+                      <td style={{ padding: "1rem", borderBottom: "1px solid var(--border-subtle)", textTransform: "capitalize", color: "var(--text-secondary)" }}>{machine.type}</td>
+                      <td style={{ padding: "1rem", borderBottom: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>{machine.groupName ?? "—"}</td>
+                      <td style={{ padding: "1rem", borderBottom: "1px solid var(--border-subtle)" }}>
+                        <StatusBadge displayState={displayState} />
+                      </td>
+                      <td style={{ padding: "1rem", borderBottom: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>
+                        {machine.deviceIdHex ? <code style={css.mono}>{machine.deviceIdHex}</code> : "Unlinked"}
+                      </td>
+                      <td style={{ padding: "1rem", borderBottom: "1px solid var(--border-subtle)" }}>
+                        <Link style={{ ...css.btnSecondary, fontSize: "0.875rem", padding: "0.5rem 1rem", minHeight: 36 }} to={`/p/${placeId}/m/${machine._id}`}>
+                          View Details
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -852,38 +1031,143 @@ function MachinesPage() {
   );
 }
 
+function startOfTodayTimestamp() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+function CycleHistoryChart({
+  cycles,
+  windowMs,
+}: {
+  cycles: Array<{ _id: string; startedAt: number; endedAt: number; durationMs: number }>;
+  windowMs: number;
+}) {
+  if (cycles.length === 0) {
+    return (
+      <div style={{ ...css.card, background: "var(--bg-surface-2)", textAlign: "center", color: "var(--text-muted)" }}>
+        No cycles recorded in this range yet.
+      </div>
+    );
+  }
+
+  const rangeStart = Date.now() - windowMs;
+
+  return (
+    <div style={{ ...css.card, background: "var(--bg-surface-2)", padding: "1rem" }}>
+      <svg height="180" style={{ width: "100%", display: "block" }} viewBox="0 0 100 180" preserveAspectRatio="none">
+        <line x1="0" x2="100" y1="170" y2="170" stroke="var(--border-default)" strokeWidth="1" />
+        {cycles
+          .slice()
+          .sort((left, right) => left.startedAt - right.startedAt)
+          .map((cycle) => {
+            const startRatio = Math.max(0, (cycle.startedAt - rangeStart) / windowMs);
+            const widthRatio = Math.max(0.04, cycle.durationMs / windowMs);
+            const x = startRatio * 100;
+            const width = Math.min(100 - x, widthRatio * 100);
+
+            return (
+              <rect
+                key={cycle._id}
+                x={x}
+                y={36}
+                width={width}
+                height={118}
+                rx={3}
+                fill="url(#cycleGradient)"
+                opacity="0.95"
+              />
+            );
+          })}
+        <defs>
+          <linearGradient id="cycleGradient" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor="#0DA6E7" />
+            <stop offset="100%" stopColor="#06CBD5" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  );
+}
+
 // ─── Machine detail ───────────────────────────────────────────────────────────
 
 function MachineDetailPage() {
   const { placeId, machineId } = useParams<{ placeId: string; machineId: string }>();
+  const navigate = useNavigate();
+  const place = useQuery(api.places.getById, placeId ? { placeId: placeId as Id<"places"> } : "skip");
   const machine = useQuery(
     api.machines.getById,
     placeId && machineId
       ? { placeId: placeId as Id<"places">, machineId: machineId as Id<"machines"> }
       : "skip",
   );
+  const groups = useQuery(api.groups.listForPlace, placeId ? { placeId: placeId as Id<"places"> } : "skip");
+  const [selectedRangeMs, setSelectedRangeMs] = useState(24 * 60 * 60_000);
+  const cycles = useQuery(
+    api.cycles.listForMachine,
+    placeId && machineId
+      ? {
+          placeId: placeId as Id<"places">,
+          machineId: machineId as Id<"machines">,
+          windowMs: selectedRangeMs,
+        }
+      : "skip",
+  );
+  const todayCycles = useQuery(
+    api.cycles.listForMachine,
+    placeId && machineId
+      ? {
+          placeId: placeId as Id<"places">,
+          machineId: machineId as Id<"machines">,
+          windowMs: Math.max(60_000, Date.now() - startOfTodayTimestamp()),
+        }
+      : "skip",
+  );
 
   const updateMachine = useMutation(api.machines.update);
   const unlinkDevice = useMutation(api.machines.unlinkDevice);
+  const removeMachine = useMutation(api.machines.remove);
   const [editName, setEditName] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmUnlink, setConfirmUnlink] = useState(false);
+  const [removeConfirmName, setRemoveConfirmName] = useState("");
+  const [removingMachine, setRemovingMachine] = useState(false);
 
   useEffect(() => {
-    if (machine) setEditName(machine.name);
-  }, [machine?.name]);
+    if (machine) {
+      setEditName(machine.name);
+      setSelectedGroupId(machine.groupId ?? "");
+    }
+  }, [machine]);
 
   if (machine === null) return <DashNotFoundPage />;
 
   const displayState = machine
     ? deriveDisplayState(machine.state, machine.lastStateChangeAt, machine.lastHeartbeatAt, machine.previousState)
     : "off";
+  const placeRole = place && "role" in place ? place.role : null;
+  const canManageMachine = placeRole === "admin" || placeRole === "owner";
+  const rangeOptions: Array<{ label: string; value: number }> = [
+    { label: "1h", value: 60 * 60_000 },
+    { label: "6h", value: 6 * 60 * 60_000 },
+    { label: "24h", value: 24 * 60 * 60_000 },
+    { label: "7d", value: 7 * 24 * 60 * 60_000 },
+  ];
 
   async function handleSave() {
     if (!machineId || !editName.trim()) return;
     setSaving(true);
     try {
-      await updateMachine({ machineId: machineId as Id<"machines">, name: editName.trim() });
+      await updateMachine({
+        machineId: machineId as Id<"machines">,
+        name: editName.trim(),
+        ...(selectedGroupId
+          ? { groupId: selectedGroupId as Id<"groups"> }
+          : { clearGroup: true }),
+      });
     } finally {
       setSaving(false);
     }
@@ -893,6 +1177,17 @@ function MachineDetailPage() {
     if (!machineId) return;
     await unlinkDevice({ machineId: machineId as Id<"machines"> });
     setConfirmUnlink(false);
+  }
+
+  async function handleRemoveMachine() {
+    if (!machineId || removeConfirmName !== machine?.name) return;
+    setRemovingMachine(true);
+    try {
+      await removeMachine({ machineId: machineId as Id<"machines"> });
+      navigate(`/p/${placeId}/machines`);
+    } finally {
+      setRemovingMachine(false);
+    }
   }
 
   return (
@@ -912,6 +1207,9 @@ function MachineDetailPage() {
             </div>
             <p style={{ fontSize: "0.9375rem", color: "var(--text-secondary)", marginTop: "1rem" }}>
               {machine ? machineStatusCopy(machine.state, machine.lastStateChangeAt, machine.lastHeartbeatAt, machine.previousState, machine.cycleStartedAt ?? undefined) : ""}
+            </p>
+            <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginTop: "0.75rem" }}>
+              Cycles today: {todayCycles?.length ?? "—"}
             </p>
           </div>
 
@@ -938,10 +1236,64 @@ function MachineDetailPage() {
           </div>
         </div>
 
+        <div style={{ ...css.card, marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+            <div>
+              <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.125rem", fontWeight: 700, marginBottom: "0.25rem" }}>
+                History
+              </h2>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+                Usage history for this machine.
+              </p>
+            </div>
+            <div style={{ display: "inline-flex", gap: "0.25rem", padding: "0.25rem", background: "var(--bg-surface-2)", border: "2px solid var(--border-subtle)", borderRadius: "var(--radius-full)" }}>
+              {rangeOptions.map((option) => (
+                <button
+                  key={option.label}
+                  onClick={() => setSelectedRangeMs(option.value)}
+                  style={{ ...css.btnSecondary, minHeight: 36, padding: "0.5rem 0.875rem", background: selectedRangeMs === option.value ? "var(--bg-surface-1)" : "transparent", border: selectedRangeMs === option.value ? "2px solid var(--border-default)" : "2px solid transparent" }}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <CycleHistoryChart cycles={cycles ?? []} windowMs={selectedRangeMs} />
+
+          <div style={{ marginTop: "1rem" }}>
+            <h3 style={{ fontSize: "0.9375rem", fontWeight: 700, marginBottom: "0.75rem" }}>Recent Cycles</h3>
+            {cycles === undefined ? (
+              <div className="skeleton" style={{ height: 56, borderRadius: 12 }} />
+            ) : cycles.length === 0 ? (
+              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
+                No completed cycles in the selected time range.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {cycles.slice(0, 8).map((cycle) => (
+                  <div key={cycle._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "0.875rem 1rem", background: "var(--bg-surface-2)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)" }}>
+                    <div>
+                      <p style={{ fontWeight: 600, marginBottom: "0.2rem" }}>{formatTimestamp(cycle.startedAt)}</p>
+                      <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+                        Finished {formatRelativeTime(cycle.endedAt)}
+                      </p>
+                    </div>
+                    <span style={{ color: "var(--primary-400)", fontWeight: 700 }}>
+                      {formatDuration(cycle.durationMs)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Machine settings */}
         <div style={{ ...css.card, marginBottom: "1.5rem" }}>
           <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.125rem", fontWeight: 700, marginBottom: "1.25rem" }}>Machine Settings</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "1.25rem" }}>
             <div>
               <label style={css.formLabel} htmlFor="edit-machine-name">Machine name</label>
               <input id="edit-machine-name" onChange={(e) => setEditName(e.target.value)} style={css.formInput} value={editName} />
@@ -952,29 +1304,74 @@ function MachineDetailPage() {
                 {machine?.type ?? "—"}
               </div>
             </div>
+            <div>
+              <label style={css.formLabel} htmlFor="edit-machine-group">Group</label>
+              <select
+                id="edit-machine-group"
+                onChange={(e) => setSelectedGroupId(e.target.value)}
+                style={css.formSelect}
+                value={selectedGroupId}
+              >
+                <option value="">No group</option>
+                {groups?.map((group) => (
+                  <option key={group._id} value={group._id}>{group.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <button disabled={!editName.trim() || saving || editName === machine?.name} onClick={() => void handleSave()} style={{ ...css.btnPrimary, opacity: !editName.trim() || saving || editName === machine?.name ? 0.6 : 1 }} type="button">
+          <button disabled={!editName.trim() || saving || (editName === machine?.name && selectedGroupId === (machine?.groupId ?? ""))} onClick={() => void handleSave()} style={{ ...css.btnPrimary, opacity: !editName.trim() || saving || (editName === machine?.name && selectedGroupId === (machine?.groupId ?? "")) ? 0.6 : 1 }} type="button">
             {saving ? "Saving..." : "Save Settings"}
           </button>
         </div>
 
         {/* Danger zone */}
-        {machine?.deviceIdHex ? (
+        {(machine?.deviceIdHex || canManageMachine) ? (
           <div style={{ ...css.card, borderColor: "var(--error-border)", background: "var(--error-soft)" }}>
             <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.125rem", fontWeight: 700, marginBottom: "0.75rem", color: "var(--error)" }}>
               Danger Zone
             </h2>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", marginBottom: "1rem" }}>
-              Remove the linked device from this machine. The device will lose its API key and re-enter provisioning mode.
-            </p>
-            {confirmUnlink ? (
-              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                <button onClick={() => void handleUnlink()} style={{ ...css.btnPrimary, background: "var(--error)" }} type="button">Yes, Remove Device</button>
-                <button onClick={() => setConfirmUnlink(false)} style={css.btnSecondary} type="button">Cancel</button>
+            {machine?.deviceIdHex ? (
+              <div style={{ marginBottom: canManageMachine ? "1.25rem" : 0 }}>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", marginBottom: "1rem" }}>
+                  Remove the linked device from this machine. The device will lose its API key and re-enter provisioning mode.
+                </p>
+                {confirmUnlink ? (
+                  <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                    <button onClick={() => void handleUnlink()} style={{ ...css.btnPrimary, background: "var(--error)" }} type="button">Yes, Remove Device</button>
+                    <button onClick={() => setConfirmUnlink(false)} style={css.btnSecondary} type="button">Cancel</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmUnlink(true)} style={{ ...css.btnSecondary, borderColor: "var(--error)", color: "var(--error)" }} type="button">Remove Device</button>
+                )}
               </div>
-            ) : (
-              <button onClick={() => setConfirmUnlink(true)} style={{ ...css.btnSecondary, borderColor: "var(--error)", color: "var(--error)" }} type="button">Remove Device</button>
-            )}
+            ) : null}
+
+            {canManageMachine ? (
+              <div style={{ borderTop: machine?.deviceIdHex ? "1px solid var(--error-border)" : "none", paddingTop: machine?.deviceIdHex ? "1.25rem" : 0 }}>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", marginBottom: "0.75rem" }}>
+                  Permanently remove this machine from the place.
+                </p>
+                <div style={{ marginBottom: "1rem" }}>
+                  <label style={{ ...css.formLabel, color: "var(--text-secondary)" }}>
+                    Type <strong>{machine?.name}</strong> to confirm
+                  </label>
+                  <input
+                    onChange={(e) => setRemoveConfirmName(e.target.value)}
+                    placeholder={machine?.name}
+                    style={css.formInput}
+                    value={removeConfirmName}
+                  />
+                </div>
+                <button
+                  disabled={removeConfirmName !== machine?.name || removingMachine}
+                  onClick={() => void handleRemoveMachine()}
+                  style={{ ...css.btnPrimary, background: "var(--error)", opacity: removeConfirmName !== machine?.name || removingMachine ? 0.6 : 1 }}
+                  type="button"
+                >
+                  {removingMachine ? "Removing..." : "Remove Machine"}
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -993,7 +1390,10 @@ function DevicesPage() {
   if (place === null) return <DashNotFoundPage />;
 
   const offlineCount = devices?.filter((d) => !d.online).length ?? 0;
-  const latestVersion = devices?.reduce((v, d) => (d.firmwareVersion && d.firmwareVersion > v ? d.firmwareVersion : v), "0.0.0") ?? "—";
+  const firmwareVersions = devices?.flatMap((device) => device.firmwareVersion ? [device.firmwareVersion] : []) ?? [];
+  const latestVersion = firmwareVersions.length > 0
+    ? firmwareVersions.reduce((latest, version) => version > latest ? version : latest)
+    : "—";
 
   return (
     <div style={{ ...css.page, paddingBottom: 60 }}>
@@ -1096,6 +1496,7 @@ function AddDevicePage() {
   const [newMachineName, setNewMachineName] = useState("");
   const [createNew, setCreateNew] = useState(true);
   const [claiming, setClaiming] = useState(false);
+  const [watchingClaim, setWatchingClaim] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const createMachine = useMutation(api.machines.create);
   const navigate = useNavigate();
@@ -1104,6 +1505,32 @@ function AddDevicePage() {
 
   const cleanDeviceId = deviceId.trim().toUpperCase();
   const validDeviceId = /^[0-9A-F]{12}$/.test(cleanDeviceId);
+  const pendingClaim = useQuery(
+    api.devices.getPendingClaimByDeviceId,
+    watchingClaim && placeId && validDeviceId
+      ? { placeId: placeId as Id<"places">, deviceId: cleanDeviceId }
+      : "skip",
+  );
+
+  useEffect(() => {
+    if (watchingClaim && pendingClaim === null) {
+      setWatchingClaim(false);
+      setStep("success");
+    }
+  }, [watchingClaim, pendingClaim]);
+
+  useEffect(() => {
+    if (!watchingClaim) {
+      return undefined;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setWatchingClaim(false);
+      setStep("timeout");
+    }, 5 * 60_000);
+
+    return () => window.clearTimeout(timeout);
+  }, [watchingClaim]);
 
   async function handleStep2() {
     if (!validDeviceId) {
@@ -1115,7 +1542,6 @@ function AddDevicePage() {
   }
 
   async function handleStep3() {
-    setStep(3);
     setClaiming(true);
     setErrorMsg("");
 
@@ -1139,15 +1565,16 @@ function AddDevicePage() {
         deviceId: cleanDeviceId,
         type: deviceType,
       });
-
-      // Simulate polling for device claim (in reality this would poll the API or use Convex subscriptions)
-      setTimeout(() => setStep("success"), 5000);
+      setWatchingClaim(true);
+      setStep(3);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       if (msg.includes("already_claimed") || msg.includes("device_already_claimed")) {
+        setWatchingClaim(false);
         setStep("error");
       } else {
         setErrorMsg(msg);
+        setWatchingClaim(false);
         setStep(2);
       }
     } finally {
@@ -1315,7 +1742,7 @@ function AddDevicePage() {
               <ol style={{ listStyle: "none", margin: "0 0 1.5rem", padding: 0 }}>
                 {[
                   { icon: <svg fill="none" height="20" stroke="var(--primary-400)" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24" width="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>, text: "Power on the device" },
-                  { icon: <span style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--bg-surface-2)", border: "2px solid var(--border-default)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.875rem", fontWeight: 700, flexShrink: 0 }}>2</span>, text: <span>On your phone, connect to WiFi: <strong style={css.mono}>{cleanDeviceId}</strong></span> },
+                  { icon: <span style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--bg-surface-2)", border: "2px solid var(--border-default)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.875rem", fontWeight: 700, flexShrink: 0 }}>2</span>, text: <span>On your phone, connect to WiFi: <strong style={css.mono}>{`LaundryIQ-${cleanDeviceId}`}</strong></span> },
                   { icon: <span style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--bg-surface-2)", border: "2px solid var(--border-default)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.875rem", fontWeight: 700, flexShrink: 0 }}>3</span>, text: "A setup page will open. Enter your building's WiFi credentials." },
                   { icon: <span style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--bg-surface-2)", border: "2px solid var(--border-default)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.875rem", fontWeight: 700, flexShrink: 0 }}>4</span>, text: "The device will connect and appear here automatically." },
                 ].map((item, idx) => (
@@ -1328,12 +1755,12 @@ function AddDevicePage() {
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem", padding: "1.25rem", background: "var(--bg-surface-2)", border: "2px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", marginBottom: "1.5rem" }}>
                 <Spinner size={24} />
-                <span>Waiting for device to connect...</span>
+                <span>{claiming ? "Creating claim..." : "Waiting for device to connect..."}</span>
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <button onClick={() => setStep(2)} style={css.btnSecondary} type="button">Back</button>
-                <button onClick={() => setStep("timeout")} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "0.9375rem", minHeight: 44 }} type="button">Cancel</button>
+                <button onClick={() => { setWatchingClaim(false); setStep("timeout"); }} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "0.9375rem", minHeight: 44 }} type="button">Cancel</button>
               </div>
             </>
           ) : null}
@@ -1369,7 +1796,7 @@ function AddDevicePage() {
                 ))}
               </ul>
               <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
-                <button onClick={() => setStep(3)} style={css.btnPrimary} type="button">Try Again</button>
+                <button onClick={() => { setWatchingClaim(true); setStep(3); }} style={css.btnPrimary} type="button">Try Again</button>
                 <button onClick={() => setStep(1)} style={css.btnSecondary} type="button">Cancel</button>
               </div>
             </div>
@@ -1622,7 +2049,7 @@ function PlaceSettingsPage() {
         </div>
 
         {/* Danger zone */}
-        {place?.role === "owner" ? (
+        {place && "role" in place && place.role === "owner" ? (
           <div style={{ ...css.card, borderColor: "var(--error-border)", background: "var(--error-soft)" }}>
             <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.125rem", fontWeight: 700, marginBottom: "0.75rem", color: "var(--error)" }}>
               Danger Zone

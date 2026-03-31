@@ -25,8 +25,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   AuthenticateWithRedirectCallback,
-  SignedIn,
-  SignedOut,
   UserButton,
   useAuth,
   useSignIn,
@@ -44,6 +42,7 @@ import {
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@laundryiq/convex/convex/_generated/api";
 import type { Id } from "@laundryiq/convex/convex/_generated/dataModel";
+import { Toggle } from "@laundryiq/ui";
 import {
   deriveDisplayState,
   displayStateLabel,
@@ -58,7 +57,7 @@ import { PORTAL_URL } from "./lib/urls";
 const GLOBAL_CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: #0b1120; color: #f0f4f8; line-height: 1.6; min-height: 100vh; overflow-x: hidden; padding-bottom: 60px; }
+body { font-family: var(--font-body), system-ui, -apple-system, 'Segoe UI', sans-serif; background: #0b1120; color: #f0f4f8; line-height: 1.6; min-height: 100vh; overflow-x: hidden; padding-bottom: 60px; }
 a { color: #0DA6E7; text-decoration: none; }
 a:hover { color: #3dbfec; }
 button { font-family: inherit; }
@@ -210,6 +209,29 @@ function statusColors(ds: DisplayState) {
   }
 }
 
+function placeEmoji(name: string) {
+  const lowerName = name.toLowerCase();
+  if (
+    lowerName.includes("university") ||
+    lowerName.includes("college") ||
+    lowerName.includes("hall") ||
+    lowerName.includes("dorm")
+  ) {
+    return "🏫";
+  }
+  if (lowerName.includes("laundromat")) {
+    return "🏪";
+  }
+  return "🏠";
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from(rawData, (character) => character.charCodeAt(0));
+}
+
 function WasherIcon({ color }: { color: string }) {
   return (
     <svg fill="none" height="28" stroke={color} strokeLinecap="round" strokeWidth="1.5" viewBox="0 0 24 24" width="28">
@@ -242,7 +264,7 @@ function PortalHeader({
   title?: string;
   maxWidth?: number;
 }) {
-  const { user } = useUser();
+  const { isSignedIn } = useAuth();
   return (
     <header style={S.header}>
       <div style={S.headerInner(maxWidth)}>
@@ -267,7 +289,21 @@ function PortalHeader({
           <span style={{ flex: 1 }} />
         )}
 
-        <UserButton afterSignOutUrl="/signin" />
+        {isSignedIn ? (
+          <UserButton afterSignOutUrl="/signin" />
+        ) : (
+          <a
+            href={`/signin?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`}
+            style={{
+              ...S.btnPrimary,
+              minHeight: 40,
+              padding: "0.625rem 1rem",
+              fontSize: "0.8125rem",
+            }}
+          >
+            Sign In
+          </a>
+        )}
       </div>
     </header>
   );
@@ -289,10 +325,12 @@ function SignInPage() {
     setLoading(true);
     setError("");
     try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectTo = searchParams.get("redirect") ?? "/p";
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: `${window.location.origin}/sso-callback`,
-        redirectUrlComplete: "/p",
+        redirectUrlComplete: redirectTo,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to sign in");
@@ -392,7 +430,6 @@ function PlacesPage() {
 
 function PlaceCard({ place }: { place: { _id: Id<"places">; name: string; role: string; machineCount: number } }) {
   const machines = useQuery(api.machines.listForPlace, { placeId: place._id });
-  const now = Date.now();
 
   const available = machines?.filter((m) => deriveDisplayState(m.state, m.lastStateChangeAt, m.lastHeartbeatAt, m.previousState) === "idle").length ?? 0;
   const running = machines?.filter((m) => deriveDisplayState(m.state, m.lastStateChangeAt, m.lastHeartbeatAt, m.previousState) === "running").length ?? 0;
@@ -406,7 +443,7 @@ function PlaceCard({ place }: { place: { _id: Id<"places">; name: string; role: 
       <style>{`a[href="/p/${place._id}"]:hover { border-color: ${c.borderDefault} !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }`}</style>
       <div style={{ display: "flex", alignItems: "center", gap: "0.875rem", marginBottom: "0.875rem" }}>
         <div style={{ width: 44, height: 44, borderRadius: 12, background: c.s2, border: `2px solid ${c.borderSubtle}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem", flexShrink: 0 }}>
-          🏠
+          {placeEmoji(place.name)}
         </div>
         <span style={{ fontWeight: 600, fontSize: "1.0625rem", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {place.name}
@@ -451,13 +488,19 @@ function PlaceCard({ place }: { place: { _id: Id<"places">; name: string; role: 
 // ─── Place detail (machine grid) ──────────────────────────────────────────────
 
 function PlaceDetailPage() {
-  const { placeId } = useParams<{ placeId: string }>();
+  const { isSignedIn } = useAuth();
+  const navigate = useNavigate();
+  const { placeId, machineId } = useParams<{ placeId: string; machineId?: string }>();
   const place = useQuery(api.places.getById, placeId ? { placeId: placeId as Id<"places"> } : "skip");
   const machines = useQuery(api.machines.listForPlace, placeId ? { placeId: placeId as Id<"places"> } : "skip");
   const groups = useQuery(api.groups.listForPlace, placeId ? { placeId: placeId as Id<"places"> } : "skip");
 
   const [selectedMachine, setSelectedMachine] = useState<string | null>(null);
   const [groupFilter, setGroupFilter] = useState<string>("all");
+
+  useEffect(() => {
+    setSelectedMachine(machineId ?? null);
+  }, [machineId]);
 
   if (place === null) return <NotFoundPage />;
 
@@ -467,9 +510,23 @@ function PlaceDetailPage() {
 
   const selectedM = machines?.find((m) => m._id === selectedMachine);
 
+  function handleCloseModal() {
+    if (!placeId) {
+      setSelectedMachine(null);
+      return;
+    }
+
+    if (machineId) {
+      navigate(`/p/${placeId}`);
+      return;
+    }
+
+    setSelectedMachine(null);
+  }
+
   return (
     <div style={{ background: c.page, minHeight: "100vh" }}>
-      <PortalHeader backTo="/p" maxWidth={800} title={place?.name ?? "…"} />
+      <PortalHeader backTo={isSignedIn ? "/p" : undefined} maxWidth={800} title={place?.name ?? "…"} />
       <div style={S.content(800)}>
         {/* Group filter */}
         {groups && groups.length > 0 && (
@@ -514,7 +571,10 @@ function PlaceDetailPage() {
                 <MachineCard
                   key={machine._id}
                   machine={machine}
-                  onClick={() => setSelectedMachine(machine._id)}
+                  onClick={() => {
+                    setSelectedMachine(machine._id);
+                    navigate(`/p/${placeId}/m/${machine._id}`);
+                  }}
                 />
               ))}
             </div>
@@ -524,7 +584,7 @@ function PlaceDetailPage() {
 
       {/* Machine detail modal */}
       {selectedM ? (
-        <MachineModal machine={selectedM} onClose={() => setSelectedMachine(null)} />
+        <MachineModal machine={selectedM} onClose={handleCloseModal} />
       ) : null}
     </div>
   );
@@ -557,6 +617,7 @@ type Machine = {
   previousState?: string;
   cycleStartedAt?: number | null;
   groupName?: string | null;
+  hasDevice?: boolean;
 };
 
 function MachineCard({ machine, onClick }: { machine: Machine; onClick: () => void }) {
@@ -597,8 +658,23 @@ function MachineCard({ machine, onClick }: { machine: Machine; onClick: () => vo
 // ─── Machine detail modal ─────────────────────────────────────────────────────
 
 function MachineModal({ machine, onClose }: { machine: Machine; onClose: () => void }) {
+  const { isSignedIn } = useAuth();
+  const [statusTick, setStatusTick] = useState(0);
+  const [subscriptionEnabled, setSubscriptionEnabled] = useState(false);
+  const [subscriptionBusy, setSubscriptionBusy] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState("");
   const ds = deriveDisplayState(machine.state as "idle" | "running" | "off", machine.lastStateChangeAt, machine.lastHeartbeatAt, machine.previousState as "idle" | "running" | "off" | undefined) as DisplayState;
   const col = statusColors(ds);
+  const isSubscribed = useQuery(
+    api.pushSubscriptions.isSubscribed,
+    isSignedIn ? { machineId: machine._id } : "skip",
+  );
+  const vapidPublicKey = useQuery(
+    api.pushSubscriptions.getVapidPublicKey,
+    isSignedIn ? {} : "skip",
+  );
+  const subscribeToPush = useMutation(api.pushSubscriptions.subscribe);
+  const unsubscribeFromPush = useMutation(api.pushSubscriptions.unsubscribe);
   const statusText = machineStatusCopy(machine.state as "idle" | "running" | "off", machine.lastStateChangeAt, machine.lastHeartbeatAt, machine.previousState as "idle" | "running" | "off" | undefined, machine.cycleStartedAt ?? undefined);
 
   // Close on backdrop click or Escape
@@ -608,6 +684,116 @@ function MachineModal({ machine, onClose }: { machine: Machine; onClose: () => v
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
+
+  useEffect(() => {
+    if (ds !== "running") {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      setStatusTick((value) => value + 1);
+    }, 60_000);
+
+    return () => window.clearInterval(interval);
+  }, [ds]);
+
+  useEffect(() => {
+    if (isSubscribed !== undefined) {
+      setSubscriptionEnabled(isSubscribed);
+    }
+  }, [isSubscribed]);
+
+  async function getExistingPushSubscription() {
+    if (!("serviceWorker" in navigator)) {
+      return null;
+    }
+
+    const registration = await navigator.serviceWorker.register("/push-sw.js");
+    return await registration.pushManager.getSubscription();
+  }
+
+  async function handleNotificationToggle(nextValue: boolean) {
+    if (!isSignedIn) {
+      return;
+    }
+
+    setSubscriptionBusy(true);
+    setSubscriptionError("");
+
+    try {
+      if (
+        !("Notification" in window) ||
+        !("serviceWorker" in navigator) ||
+        !("PushManager" in window)
+      ) {
+        throw new Error("Push notifications are not supported in this browser.");
+      }
+
+      if (!vapidPublicKey) {
+        throw new Error("Push notifications are not configured yet.");
+      }
+
+      const registration = await navigator.serviceWorker.register("/push-sw.js");
+
+      if (!nextValue) {
+        const existingSubscription = await registration.pushManager.getSubscription();
+        if (existingSubscription) {
+          await unsubscribeFromPush({
+            machineId: machine._id,
+            endpoint: existingSubscription.endpoint,
+          });
+          await existingSubscription.unsubscribe();
+        }
+        setSubscriptionEnabled(false);
+        return;
+      }
+
+      const permission = Notification.permission === "granted"
+        ? "granted"
+        : await Notification.requestPermission();
+      if (permission !== "granted") {
+        throw new Error("Notification permission was denied.");
+      }
+
+      const existingSubscription = await registration.pushManager.getSubscription();
+      const browserSubscription = existingSubscription ?? await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      });
+      const subscriptionJson = browserSubscription.toJSON();
+
+      if (
+        !subscriptionJson.endpoint ||
+        !subscriptionJson.keys?.p256dh ||
+        !subscriptionJson.keys?.auth
+      ) {
+        throw new Error("Failed to read the browser push subscription.");
+      }
+
+      await subscribeToPush({
+        machineId: machine._id,
+        subscription: {
+          endpoint: subscriptionJson.endpoint,
+          keys: {
+            p256dh: subscriptionJson.keys.p256dh,
+            auth: subscriptionJson.keys.auth,
+          },
+        },
+      });
+      setSubscriptionEnabled(true);
+    } catch (error) {
+      setSubscriptionError(
+        error instanceof Error ? error.message : "Failed to update notifications.",
+      );
+
+      const existingSubscription = await getExistingPushSubscription();
+      setSubscriptionEnabled(Boolean(existingSubscription) && Boolean(isSubscribed));
+    } finally {
+      setSubscriptionBusy(false);
+    }
+  }
+
+  void statusTick;
 
   return (
     <div
@@ -654,6 +840,58 @@ function MachineModal({ machine, onClose }: { machine: Machine; onClose: () => v
             </span>
             <p style={{ color: c.textSecondary, fontSize: "0.875rem" }}>{statusText}</p>
           </div>
+        </div>
+
+        <div style={{ background: c.s2, border: `2px solid ${c.borderSubtle}`, borderRadius: 16, padding: "1rem 1.125rem", marginBottom: "1.25rem" }}>
+          {isSignedIn ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: "0.9375rem", marginBottom: "0.25rem" }}>
+                    Notify me when done
+                  </p>
+                  <p style={{ color: c.textSecondary, fontSize: "0.8125rem", lineHeight: 1.5 }}>
+                    Get an alert when this machine finishes its cycle.
+                  </p>
+                </div>
+                <div style={{ opacity: subscriptionBusy ? 0.7 : 1, pointerEvents: subscriptionBusy ? "none" : "auto" }}>
+                  <Toggle
+                    checked={subscriptionEnabled}
+                    onChange={(checked) => {
+                      void handleNotificationToggle(checked);
+                    }}
+                  />
+                </div>
+              </div>
+              {subscriptionError ? (
+                <p style={{ color: c.error, fontSize: "0.75rem", marginTop: "0.75rem" }}>
+                  {subscriptionError}
+                </p>
+              ) : null}
+              {!vapidPublicKey ? (
+                <p style={{ color: c.textMuted, fontSize: "0.75rem", marginTop: "0.75rem" }}>
+                  Notifications are temporarily unavailable.
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: "0.9375rem", marginBottom: "0.25rem" }}>
+                  Sign in to get notified
+                </p>
+                <p style={{ color: c.textSecondary, fontSize: "0.8125rem", lineHeight: 1.5 }}>
+                  Save this machine and get a push notification when the cycle finishes.
+                </p>
+              </div>
+              <a
+                href={`/signin?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`}
+                style={{ ...S.btnPrimary, minHeight: 40, padding: "0.625rem 1rem", fontSize: "0.8125rem" }}
+              >
+                Sign In
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Tips for running machines */}
@@ -714,12 +952,17 @@ function InvitePage() {
     );
   }
 
-  if (invite === null) {
+  if (invite === null || invite.status === "expired" || invite.status === "used") {
+    const message = invite === null
+      ? "This invite link is invalid or has expired."
+      : invite.status === "used"
+        ? "This invite link has already been used."
+        : "This invite link has expired.";
     return (
       <div style={{ background: c.page, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
         <div style={{ textAlign: "center", maxWidth: 380 }}>
           <h1 style={{ fontWeight: 700, fontSize: "1.5rem", marginBottom: "0.75rem" }}>Invite not found</h1>
-          <p style={{ color: c.textSecondary, marginBottom: "1.5rem" }}>This invite link is invalid or has expired.</p>
+          <p style={{ color: c.textSecondary, marginBottom: "1.5rem" }}>{message}</p>
           <Link style={S.btnPrimary} to="/p">Go to Places</Link>
         </div>
       </div>
@@ -740,11 +983,16 @@ function InvitePage() {
 
         <div style={{ ...S.card, padding: "2rem", textAlign: "center" }}>
           <div style={{ width: 64, height: 64, borderRadius: 16, background: c.infoSoft, border: `2px solid ${c.infoBorder}`, margin: "0 auto 1rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>
-            🏠
+            {invite.status === "valid" && invite.placeName ? placeEmoji(invite.placeName) : "🏠"}
           </div>
           <p style={{ color: c.textSecondary, fontSize: "0.875rem", marginBottom: "0.25rem", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>
-            Joining as {invite.role}
+            Joining as {invite.status === "valid" ? invite.role : "viewer"}
           </p>
+          {invite.status === "valid" && invite.placeName ? (
+            <h2 style={{ fontWeight: 700, fontSize: "1.125rem", marginBottom: "0.5rem" }}>
+              {invite.placeName}
+            </h2>
+          ) : null}
 
           {error ? (
             <div style={{ padding: "0.75rem 1rem", background: c.errorSoft, border: `1px solid ${c.errorBorder}`, borderRadius: 12, fontSize: "0.875rem", color: c.error, marginBottom: "1.25rem", marginTop: "1rem" }}>
@@ -782,6 +1030,8 @@ function InvitePage() {
 
 function SettingsPage() {
   const { user } = useUser();
+  const subscriptions = useQuery(api.pushSubscriptions.listForCurrentUser);
+  const unsubscribeById = useMutation(api.pushSubscriptions.unsubscribeById);
 
   return (
     <div style={{ background: c.page, minHeight: "100vh" }}>
@@ -805,6 +1055,52 @@ function SettingsPage() {
           <p style={{ color: c.textMuted, fontSize: "0.8125rem" }}>
             Account details are managed through Google.
           </p>
+        </div>
+
+        <div style={{ ...S.card, padding: "1.5rem", marginBottom: "1rem" }}>
+          <h2 style={{ fontWeight: 700, fontSize: "1.125rem", marginBottom: "1rem" }}>
+            Notification Preferences
+          </h2>
+          {subscriptions === undefined ? (
+            <div className="skeleton" style={{ height: 56, borderRadius: 16 }} />
+          ) : subscriptions.length === 0 ? (
+            <p style={{ color: c.textMuted, fontSize: "0.875rem" }}>
+              You don&apos;t have any active machine notifications yet.
+            </p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {subscriptions.map((subscription) => (
+                <div
+                  key={subscription.id}
+                  style={{
+                    background: c.s2,
+                    border: `1px solid ${c.borderSubtle}`,
+                    borderRadius: 14,
+                    padding: "0.875rem 1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "1rem",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div>
+                    <p style={{ fontWeight: 600, marginBottom: "0.2rem" }}>{subscription.machineName}</p>
+                    <p style={{ color: c.textSecondary, fontSize: "0.8125rem" }}>
+                      {subscription.placeName} · enabled {formatRelativeTime(subscription.createdAt)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => void unsubscribeById({ subscriptionId: subscription.id })}
+                    style={{ background: "transparent", border: "none", color: c.error, cursor: "pointer", fontWeight: 600, minHeight: 44 }}
+                    type="button"
+                  >
+                    Unsubscribe
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ ...S.card, padding: "1.5rem" }}>
@@ -861,7 +1157,8 @@ export default function App() {
           <Route element={<InvitePage />} path="/invite/:token" />
 
           <Route element={<RequireAuth><PlacesPage /></RequireAuth>} path="/p" />
-          <Route element={<RequireAuth><PlaceDetailPage /></RequireAuth>} path="/p/:placeId" />
+          <Route element={<PlaceDetailPage />} path="/p/:placeId" />
+          <Route element={<PlaceDetailPage />} path="/p/:placeId/m/:machineId" />
           <Route element={<RequireAuth><SettingsPage /></RequireAuth>} path="/settings" />
 
           <Route element={<NotFoundPage />} path="*" />

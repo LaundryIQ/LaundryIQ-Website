@@ -42,66 +42,73 @@ async function requireMembership(
   return membership;
 }
 
+async function machineResponse(
+  ctx: QueryCtx,
+  machine: {
+    _id: Id<"machines">;
+    _creationTime: number;
+    placeId: Id<"places">;
+    groupId?: Id<"groups">;
+    name: string;
+    type: "washer" | "dryer";
+    state: "off" | "idle" | "running";
+    previousState?: "off" | "idle" | "running";
+    lastStateChangeAt: number;
+    lastHeartbeatAt: number;
+    cycleStartedAt?: number;
+    deviceId?: Id<"devices">;
+    createdAt: number;
+    updatedAt: number;
+  },
+) {
+  const group = machine.groupId ? await ctx.db.get(machine.groupId) : null;
+  const device = machine.deviceId ? await ctx.db.get(machine.deviceId) : null;
+  const hasDevice = Boolean(machine.deviceId);
+  const deviceOnline = device?.lastSeenAt !== undefined
+    ? Date.now() - device.lastSeenAt < 10 * 60_000
+    : false;
+
+  return {
+    ...machine,
+    state: hasDevice ? machine.state : "off",
+    previousState: hasDevice ? machine.previousState : undefined,
+    groupName: group?.name ?? null,
+    deviceIdHex: device?.deviceId ?? null,
+    firmwareVersion: device?.firmwareVersion ?? null,
+    hardwareVersion: device?.hardwareVersion ?? null,
+    lastSeenAt: device?.lastSeenAt ?? null,
+    deviceOnline,
+    hasDevice,
+  };
+}
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export const listForPlace = query({
   args: { placeId: v.id("places") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-    if (!user) return [];
-
-    const membership = await getMembership(ctx, user._id, args.placeId);
-    if (!membership) return [];
+    const place = await ctx.db.get(args.placeId);
+    if (!place) return [];
 
     const machines = await ctx.db
       .query("machines")
       .withIndex("by_place", (q) => q.eq("placeId", args.placeId))
       .collect();
 
-    return await Promise.all(
-      machines.map(async (machine) => {
-        const group = machine.groupId ? await ctx.db.get(machine.groupId) : null;
-        const device = machine.deviceId ? await ctx.db.get(machine.deviceId) : null;
-        return {
-          ...machine,
-          groupName: group?.name ?? null,
-          deviceIdHex: device?.deviceId ?? null,
-          firmwareVersion: device?.firmwareVersion ?? null,
-          deviceOnline: device
-            ? (device.lastSeenAt !== undefined && Date.now() - device.lastSeenAt < 10 * 60_000)
-            : false,
-        };
-      }),
-    );
+    return await Promise.all(machines.map((machine) => machineResponse(ctx, machine)));
   },
 });
 
 export const getById = query({
   args: { placeId: v.id("places"), machineId: v.id("machines") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-    if (!user) return null;
-
-    const membership = await getMembership(ctx, user._id, args.placeId);
-    if (!membership) return null;
+    const place = await ctx.db.get(args.placeId);
+    if (!place) return null;
 
     const machine = await ctx.db.get(args.machineId);
     if (!machine || machine.placeId !== args.placeId) return null;
 
-    const group = machine.groupId ? await ctx.db.get(machine.groupId) : null;
-    const device = machine.deviceId ? await ctx.db.get(machine.deviceId) : null;
-
-    return {
-      ...machine,
-      groupName: group?.name ?? null,
-      deviceIdHex: device?.deviceId ?? null,
-      firmwareVersion: device?.firmwareVersion ?? null,
-      hardwareVersion: device?.hardwareVersion ?? null,
-      lastSeenAt: device?.lastSeenAt ?? null,
-      deviceOnline: device
-        ? (device.lastSeenAt !== undefined && Date.now() - device.lastSeenAt < 10 * 60_000)
-        : false,
-    };
+    return await machineResponse(ctx, machine);
   },
 });
 

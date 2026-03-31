@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import MarketingFooter from "../components/MarketingFooter";
 import MarketingNav from "../components/MarketingNav";
 import styles from "../components/marketing.module.css";
-import { SHOP_URL } from "../lib/urls";
+import { PORTAL_URL, SHOP_URL } from "../lib/urls";
 
 export default function HomePage() {
   // Intersection Observer for fade-up animations
@@ -133,9 +133,7 @@ export default function HomePage() {
               <div className={styles.heroActions} style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
                 <a
                   className={`${styles.btnPrimary} ${styles.btnLg}`}
-                  href={SHOP_URL}
-                  rel="noreferrer"
-                  target="_blank"
+                  href={`${PORTAL_URL}/signin`}
                 >
                   Get Started
                 </a>
@@ -624,7 +622,7 @@ export default function HomePage() {
           <p style={{ color: "var(--text-secondary)", fontSize: "1.0625rem", marginBottom: "2rem", maxWidth: 480, margin: "0 auto 2rem" }}>
             Join the homes and campuses that never waste another trip to the laundry room.
           </p>
-          <a className={`${styles.btnPrimary} ${styles.btnLg}`} href={SHOP_URL} rel="noreferrer" target="_blank">
+          <a className={`${styles.btnPrimary} ${styles.btnLg}`} href={`${PORTAL_URL}/signin`}>
             Get Your LaundryIQ
           </a>
         </div>

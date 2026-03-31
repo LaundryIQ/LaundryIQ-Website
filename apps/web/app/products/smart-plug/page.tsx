@@ -111,6 +111,9 @@ export default function SmartPlugPage() {
               >
                 LaundryIQ Smart Plug
               </h1>
+              <p style={{ fontSize: "1.625rem", fontWeight: 800, marginBottom: "0.875rem" }}>
+                $49.99
+              </p>
               <p style={{ color: "var(--text-secondary)", fontSize: "1.0625rem", lineHeight: 1.6, marginBottom: "2rem" }}>
                 Plug it between the wall outlet and your washer or dryer. Connect to WiFi in under 2 minutes.
                 Real-time machine status and push notifications start working immediately.

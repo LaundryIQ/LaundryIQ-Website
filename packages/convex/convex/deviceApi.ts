@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 
+import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
@@ -279,12 +280,41 @@ export const recordState = internalMutation({
       throw new Error("Machine not found.");
     }
 
+    const stateChanged = machine.state !== args.state;
+    const cycleStartedAt =
+      args.state === "running" && machine.state !== "running"
+        ? args.now
+        : machine.cycleStartedAt;
+    const completedCycle =
+      machine.state === "running" &&
+      (args.state === "idle" || args.state === "off") &&
+      machine.cycleStartedAt !== undefined;
+    const completedCycleStartedAt = completedCycle ? machine.cycleStartedAt! : null;
+
     await ctx.db.patch(machine._id, {
+      previousState: stateChanged ? machine.state : machine.previousState,
       state: args.state,
       lastHeartbeatAt: args.now,
-      lastStateChangeAt: machine.state === args.state ? machine.lastStateChangeAt : args.now,
+      lastStateChangeAt: stateChanged ? args.now : machine.lastStateChangeAt,
+      cycleStartedAt,
       updatedAt: args.now,
     });
+
+    if (completedCycleStartedAt !== null) {
+      await ctx.db.insert("cycles", {
+        machineId: machine._id,
+        placeId: machine.placeId,
+        startedAt: completedCycleStartedAt,
+        endedAt: args.now,
+        durationMs: Math.max(0, args.now - completedCycleStartedAt),
+      });
+
+      await ctx.scheduler.runAfter(0, internal.pushNotifications.notifySubscribers, {
+        machineId: machine._id,
+        machineName: machine.name,
+        placeId: machine.placeId,
+      });
+    }
   },
 });
 

@@ -10,6 +10,10 @@
 @currentVersion = {{$dotenv CURRENT_VERSION}}
 @hardwareVersion = {{$dotenv HARDWARE_VERSION}}
 
+# Production target: https://api.laundryiq.app
+# Dev fallback: use the raw Convex deployment URL directly until the custom
+# domain is configured.
+
 ###
 # POST /device/claim — First-time provisioning (no API key yet)
 # Admin must create a pending claim in the dashboard first.
@@ -27,7 +31,7 @@ Content-Type: application/json
 
 ###
 # POST /device/heartbeat — Liveness ping (every 300s / 5 min)
-# Empty body. 401 = clear key, enter claim mode.
+# Empty body. 200: {"success": true}. 401 = clear key, enter claim mode.
 #
 POST {{baseUrl}}/api/v1/device/heartbeat
 Authorization: Bearer {{apiKey}}
@@ -57,3 +61,9 @@ Authorization: Bearer {{apiKey}}
 X-Device-ID: {{deviceId}}
 X-Current-Version: {{currentVersion}}
 X-Hardware-Version: {{hardwareVersion}}
+
+###
+# Firmware seed note:
+# Seed firmware releases with the internal Convex mutation
+# `internal.firmware.upsertRelease` from the Convex dashboard or a one-off
+# script before testing OTA checks in production.

@@ -45,7 +45,7 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
-  --font-heading: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: var(--font-plus-jakarta), system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
   --shadow-md: 0 4px 12px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);

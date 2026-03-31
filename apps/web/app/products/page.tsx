@@ -170,6 +170,9 @@ export default function ProductsPage() {
                 <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.75rem", fontWeight: 700, marginBottom: "0.5rem" }}>
                   LaundryIQ Smart Plug
                 </h2>
+                <p style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "0.75rem" }}>
+                  $49.99
+                </p>
                 <p style={{ color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: "1.5rem" }}>
                   Plug it between the outlet and your washer or dryer. Connect to WiFi. Done.
                   Real-time monitoring and notifications start working immediately.

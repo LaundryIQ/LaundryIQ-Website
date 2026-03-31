@@ -97,6 +97,13 @@ Each app keeps a committed `.env.example` next to its real env (copy to `.env.lo
 | `packages/convex/.env.example` | `packages/convex/.env.local` |
 | `api/.env.example` | `api/.env` |
 
+### Env File Parity
+
+- Keep each `.env.example` in the same variable order and grouping as the corresponding real local env file.
+- Show the expected value shape in `.env.example` so someone copying it can tell which kind of key or URL belongs in each slot.
+- Never hardcode backend URLs, publishable keys, secret keys, or deployment-specific config in application bootstrap code as a fallback. If config is required, read it from env and fail clearly.
+- If env requirements change, update both the real local env file format and the example file format together.
+
 ## TypeScript Standards
 
 - **Never use `any`.** It silently disables type checking.
@@ -119,6 +126,18 @@ Do not use legacy AI models like GPT-4o. Use current models from major labs.
 ## Verification
 
 For comprehensive edits, always finish with a numbered manual test checklist covering changed behaviors end-to-end.
+
+## Ask Questions
+
+- Use the question tool early when a decision, credential, hosted setting, or external action is needed.
+- Prefer asking a precise unblock question over guessing or implementing a speculative workaround.
+- If there are multiple valid approaches with meaningful tradeoffs, ask before locking one in.
+
+## Unblocks
+
+- Do not stop a task halfway without first trying to unblock it through the available tools and, when needed, asking the user a precise question.
+- If a task is truly blocked by an external UI, missing access, DNS propagation, or another non-code dependency, explain exactly what is already done, what remains, and the smallest next action needed from the user.
+- Never leave behind bodged code to hide a real configuration or hosting problem.
 
 ## App Roles
 

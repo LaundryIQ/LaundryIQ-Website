@@ -52,6 +52,12 @@ async function requireMembership(
   return membership;
 }
 
+function startOfToday() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 /** List all places the authenticated user is a member of. */
@@ -82,16 +88,27 @@ export const listForCurrentUser = query({
         if (!place) {
           return null;
         }
-        const machineCount = (
+        const machines = await ctx.db
+          .query("machines")
+          .withIndex("by_place", (q) => q.eq("placeId", place._id))
+          .collect();
+        const machineCount = machines.length;
+        const runningCount = machines.filter((machine) => machine.state === "running").length;
+        const todayStart = startOfToday();
+        const cyclesToday = (
           await ctx.db
-            .query("machines")
-            .withIndex("by_place", (q) => q.eq("placeId", place._id))
+            .query("cycles")
+            .withIndex("by_place_and_started", (q) =>
+              q.eq("placeId", place._id).gte("startedAt", todayStart),
+            )
             .collect()
         ).length;
         return {
           ...place,
           role: membership.role,
           machineCount,
+          runningCount,
+          cyclesToday,
         };
       }),
     );
@@ -104,9 +121,18 @@ export const listForCurrentUser = query({
 export const getById = query({
   args: { placeId: v.id("places") },
   handler: async (ctx, args) => {
+    const place = await ctx.db.get(args.placeId);
+    if (!place) {
+      return null;
+    }
+
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      return null;
+      return {
+        _id: place._id,
+        name: place.name,
+        slug: place.slug,
+      };
     }
 
     const user = await ctx.db
@@ -114,16 +140,15 @@ export const getById = query({
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
     if (!user) {
-      return null;
+      return {
+        _id: place._id,
+        name: place.name,
+        slug: place.slug,
+      };
     }
 
     const membership = await getMembership(ctx, user._id, args.placeId);
     if (!membership) {
-      return null;
-    }
-
-    const place = await ctx.db.get(args.placeId);
-    if (!place) {
       return null;
     }
 

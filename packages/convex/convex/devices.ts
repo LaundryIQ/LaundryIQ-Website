@@ -124,6 +124,28 @@ export const listPendingClaimsForPlace = query({
   },
 });
 
+export const getPendingClaimByDeviceId = query({
+  args: {
+    placeId: v.id("places"),
+    deviceId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    if (!user) return null;
+
+    const membership = await getMembership(ctx, user._id, args.placeId);
+    if (!membership) return null;
+
+    const claims = await ctx.db
+      .query("pendingClaims")
+      .withIndex("by_device_id", (q) => q.eq("deviceId", args.deviceId))
+      .collect();
+
+    const now = Date.now();
+    return claims.find((claim) => claim.placeId === args.placeId && claim.expiresAt > now) ?? null;
+  },
+});
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60_000;
