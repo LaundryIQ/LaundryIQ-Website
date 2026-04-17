@@ -53,6 +53,9 @@ import {
   machineStatusCopy,
   type DisplayState,
 } from "@laundryiq/utils";
+// >>> WAITLIST GATE — TEMPORARY (Spring 2026, pre-launch). Remove this import + the wrapper below when going live. See WAITLIST.md.
+import { WaitlistGate } from "./waitlist/WaitlistGate";
+// <<< END WAITLIST GATE IMPORT
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
@@ -2156,23 +2159,27 @@ export default function App() {
   useUserSync();
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Navigate replace to="/p" />} path="/" />
-        <Route element={<DashAuthPage />} path="/signin" />
-        <Route element={<AuthenticateWithRedirectCallback afterSignInUrl="/p" afterSignUpUrl="/p" />} path="/sso-callback" />
+    // >>> WAITLIST GATE — TEMPORARY. Remove the wrapper (keep its children) when going live. See WAITLIST.md.
+    <WaitlistGate>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Navigate replace to="/p" />} path="/" />
+          <Route element={<DashAuthPage />} path="/signin" />
+          <Route element={<AuthenticateWithRedirectCallback afterSignInUrl="/p" afterSignUpUrl="/p" />} path="/sso-callback" />
 
-        <Route element={<RequireAuth><PlaceListPage /></RequireAuth>} path="/p" />
-        <Route element={<RequireAuth><PlaceOverviewPage /></RequireAuth>} path="/p/:placeId" />
-        <Route element={<RequireAuth><MachinesPage /></RequireAuth>} path="/p/:placeId/machines" />
-        <Route element={<RequireAuth><MachineDetailPage /></RequireAuth>} path="/p/:placeId/m/:machineId" />
-        <Route element={<RequireAuth><DevicesPage /></RequireAuth>} path="/p/:placeId/devices" />
-        <Route element={<RequireAuth><AddDevicePage /></RequireAuth>} path="/p/:placeId/devices/add" />
-        <Route element={<RequireAuth><UsersPage /></RequireAuth>} path="/p/:placeId/users" />
-        <Route element={<RequireAuth><PlaceSettingsPage /></RequireAuth>} path="/p/:placeId/settings" />
-        <Route element={<RequireAuth><AccountSettingsPage /></RequireAuth>} path="/settings" />
-        <Route element={<DashNotFoundPage />} path="*" />
-      </Routes>
-    </BrowserRouter>
+          <Route element={<RequireAuth><PlaceListPage /></RequireAuth>} path="/p" />
+          <Route element={<RequireAuth><PlaceOverviewPage /></RequireAuth>} path="/p/:placeId" />
+          <Route element={<RequireAuth><MachinesPage /></RequireAuth>} path="/p/:placeId/machines" />
+          <Route element={<RequireAuth><MachineDetailPage /></RequireAuth>} path="/p/:placeId/m/:machineId" />
+          <Route element={<RequireAuth><DevicesPage /></RequireAuth>} path="/p/:placeId/devices" />
+          <Route element={<RequireAuth><AddDevicePage /></RequireAuth>} path="/p/:placeId/devices/add" />
+          <Route element={<RequireAuth><UsersPage /></RequireAuth>} path="/p/:placeId/users" />
+          <Route element={<RequireAuth><PlaceSettingsPage /></RequireAuth>} path="/p/:placeId/settings" />
+          <Route element={<RequireAuth><AccountSettingsPage /></RequireAuth>} path="/settings" />
+          <Route element={<DashNotFoundPage />} path="*" />
+        </Routes>
+      </BrowserRouter>
+    </WaitlistGate>
+    // <<< END WAITLIST GATE WRAPPER
   );
 }
