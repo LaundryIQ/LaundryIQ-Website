@@ -51,6 +51,9 @@ import {
   type DisplayState,
 } from "@laundryiq/utils";
 import { PORTAL_URL } from "./lib/urls";
+// >>> WAITLIST GATE — TEMPORARY (Spring 2026, pre-launch). Remove this import + the wrapper below when going live. See WAITLIST.md.
+import { WaitlistGate } from "./waitlist/WaitlistGate";
+// <<< END WAITLIST GATE IMPORT
 
 // ─── Global CSS injected once ─────────────────────────────────────────────────
 
@@ -1149,21 +1152,25 @@ export default function App() {
   return (
     <>
       <style>{GLOBAL_CSS}</style>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<Navigate replace to="/p" />} path="/" />
-          <Route element={<SignInPage />} path="/signin" />
-          <Route element={<AuthenticateWithRedirectCallback afterSignInUrl="/p" afterSignUpUrl="/p" />} path="/sso-callback" />
-          <Route element={<InvitePage />} path="/invite/:token" />
+      {/* >>> WAITLIST GATE — TEMPORARY. Remove the wrapper (keep its children) when going live. See WAITLIST.md. */}
+      <WaitlistGate>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<Navigate replace to="/p" />} path="/" />
+            <Route element={<SignInPage />} path="/signin" />
+            <Route element={<AuthenticateWithRedirectCallback afterSignInUrl="/p" afterSignUpUrl="/p" />} path="/sso-callback" />
+            <Route element={<InvitePage />} path="/invite/:token" />
 
-          <Route element={<RequireAuth><PlacesPage /></RequireAuth>} path="/p" />
-          <Route element={<PlaceDetailPage />} path="/p/:placeId" />
-          <Route element={<PlaceDetailPage />} path="/p/:placeId/m/:machineId" />
-          <Route element={<RequireAuth><SettingsPage /></RequireAuth>} path="/settings" />
+            <Route element={<RequireAuth><PlacesPage /></RequireAuth>} path="/p" />
+            <Route element={<PlaceDetailPage />} path="/p/:placeId" />
+            <Route element={<PlaceDetailPage />} path="/p/:placeId/m/:machineId" />
+            <Route element={<RequireAuth><SettingsPage /></RequireAuth>} path="/settings" />
 
-          <Route element={<NotFoundPage />} path="*" />
-        </Routes>
-      </BrowserRouter>
+            <Route element={<NotFoundPage />} path="*" />
+          </Routes>
+        </BrowserRouter>
+      </WaitlistGate>
+      {/* <<< END WAITLIST GATE WRAPPER */}
     </>
   );
 }

@@ -7,6 +7,9 @@ import MarketingFooter from "../components/MarketingFooter";
 import MarketingNav from "../components/MarketingNav";
 import styles from "../components/marketing.module.css";
 import { PORTAL_URL, SHOP_URL } from "../lib/urls";
+// >>> WAITLIST POPUP — TEMPORARY (Spring 2026, pre-launch). Remove this import + the <WaitlistPopup /> render below when going live. See WAITLIST.md.
+import WaitlistPopup from "../components/WaitlistPopup";
+// <<< END WAITLIST POPUP IMPORT
 
 export default function HomePage() {
   // Intersection Observer for fade-up animations
@@ -629,6 +632,10 @@ export default function HomePage() {
       </section>
 
       <MarketingFooter />
+
+      {/* >>> WAITLIST POPUP — TEMPORARY. Remove this render when going live. See WAITLIST.md. */}
+      <WaitlistPopup />
+      {/* <<< END WAITLIST POPUP RENDER */}
 
       {/* Global styles */}
       <style>{`

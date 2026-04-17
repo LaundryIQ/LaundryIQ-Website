@@ -24,6 +24,7 @@ import type * as pushNotifications from "../pushNotifications.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as rateLimiter from "../rateLimiter.js";
 import type * as users from "../users.js";
+import type * as waitlist from "../waitlist.js";
 
 import type {
   ApiFromModules,
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   pushSubscriptions: typeof pushSubscriptions;
   rateLimiter: typeof rateLimiter;
   users: typeof users;
+  waitlist: typeof waitlist;
 }>;
 
 /**

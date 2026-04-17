@@ -161,4 +161,42 @@ export default defineSchema({
     .index("by_machine", ["machineId"])
     .index("by_user_and_machine", ["userId", "machineId"])
     .index("by_endpoint", ["endpoint"]),
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ▼▼▼ WAITLIST GATE — TEMPORARY (Spring 2026, pre-launch) ▼▼▼
+  // The portal and dashboard are gated behind a waitlist while we finish the
+  // pilot prep. When we go live, delete:
+  //   - These two tables
+  //   - convex/waitlist.ts (the entire file)
+  //   - The <WaitlistGate> wrappers in apps/portal/src/App.tsx and apps/dashboard/src/App.tsx
+  //   - The <WaitlistPopup> import + render in apps/web/app/page.tsx
+  //   - The /apps/*/src/lib/waitlist*.ts client helpers
+  //   - WAITLIST.md at the repo root
+  // See WAITLIST.md for the full removal checklist.
+  // ════════════════════════════════════════════════════════════════════════════
+
+  // Email signups collected from the marketing-site popup and the portal/dashboard gate.
+  waitlist: defineTable({
+    email: v.string(),                  // normalised lowercase + trimmed
+    source: v.union(                    // where the signup came from
+      v.literal("marketing-popup"),
+      v.literal("portal-gate"),
+      v.literal("dashboard-gate"),
+    ),
+    userAgent: v.optional(v.string()),
+    referrer: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_email", ["email"])
+    .index("by_source_and_created", ["source", "createdAt"]),
+
+  // Bypass tokens issued when someone enters the secret bypass string.
+  // Server-side validated, never echoed back unencrypted from the client.
+  waitlistBypassTokens: defineTable({
+    token: v.string(),                  // 24-char NanoID stored on the client in localStorage
+    issuedAt: v.number(),
+    expiresAt: v.number(),              // +30 days, can be re-issued
+  })
+    .index("by_token", ["token"])
+    .index("by_expires_at", ["expiresAt"]),
 });

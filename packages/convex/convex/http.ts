@@ -11,7 +11,7 @@
  *   GET  /api/v1/device/ota/check
  */
 import { httpRouter } from "convex/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { rateLimiter } from "./rateLimiter";
 
@@ -306,5 +306,61 @@ http.route({
     });
   }),
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// ▼▼▼ WAITLIST HTTP ENDPOINT — TEMPORARY (Spring 2026, pre-launch) ▼▼▼
+// CORS-enabled POST endpoint for the marketing-site popup. The marketing
+// site (apps/web) does not wrap with ConvexProvider, so it hits this over
+// fetch. When the gate is removed, delete this entire block (it's the
+// last block in the file before `export default http;`).
+// See WAITLIST.md for the full removal checklist.
+// ════════════════════════════════════════════════════════════════════════════
+
+const WAITLIST_CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+
+http.route({
+  path: "/api/v1/waitlist/join",
+  method: "OPTIONS",
+  handler: httpAction(async () => {
+    return new Response(null, { status: 204, headers: WAITLIST_CORS_HEADERS });
+  }),
+});
+
+http.route({
+  path: "/api/v1/waitlist/join",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await parseJsonBody<{ email?: string; source?: string; userAgent?: string; referrer?: string }>(request);
+    if (!body || typeof body.email !== "string") {
+      return new Response(JSON.stringify({ error: "Missing email." }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...WAITLIST_CORS_HEADERS },
+      });
+    }
+    const sourceIn = body.source;
+    const source = sourceIn === "marketing-popup" || sourceIn === "portal-gate" || sourceIn === "dashboard-gate"
+      ? sourceIn
+      : "marketing-popup";
+
+    const result = await ctx.runMutation(api.waitlist.joinWaitlist, {
+      email: body.email,
+      source,
+      userAgent: body.userAgent,
+      referrer: body.referrer,
+    });
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...WAITLIST_CORS_HEADERS },
+    });
+  }),
+});
+
+// ▲▲▲ END WAITLIST HTTP ENDPOINT ▲▲▲
 
 export default http;
